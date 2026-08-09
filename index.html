@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="color-scheme" content="dark" />
+  <title>Pet Health</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <main class="app">
+    <header class="app-header">
+      <div>
+        <h1>🐾 Pet Health</h1>
+      </div>
+      <button class="btn primary" id="addPetBtn" type="button">+ Tier hinzufügen</button>
+    </header>
+
+    <section id="homeView">
+      <div id="emptyState" class="empty-state hidden">
+        <div class="empty-icon">🐾</div>
+        <h2>Noch keine Tiere angelegt</h2>
+        <p>Lege dein erstes Tier an, um eine eigene Akte zu erstellen.</p>
+        <button class="btn primary" id="emptyAddPetBtn" type="button">+ Erstes Tier anlegen</button>
+      </div>
+
+      <div id="petGrid" class="pet-grid"></div>
+    </section>
+
+    <section id="petView" class="hidden">
+      <button class="back-button" id="backBtn" type="button">← Zur Übersicht</button>
+
+      <article class="record-card">
+        <div class="record-head">
+          <div class="pet-avatar large" id="recordAvatar">🐾</div>
+          <div>
+            <h2 id="recordName">Tier</h2>
+            <p class="muted" id="recordSummary"></p>
+          </div>
+          <button class="btn" id="editPetBtn" type="button">Bearbeiten</button>
+        </div>
+
+        <div class="record-grid">
+          <div class="record-field">
+            <span class="label">Tierart</span>
+            <strong id="recordSpecies">–</strong>
+          </div>
+          <div class="record-field">
+            <span class="label">Rasse</span>
+            <strong id="recordBreed">–</strong>
+          </div>
+          <div class="record-field">
+            <span class="label">Geburtsdatum</span>
+            <strong id="recordBirthDate">–</strong>
+          </div>
+          <div class="record-field">
+            <span class="label">Alter</span>
+            <strong id="recordAge">–</strong>
+          </div>
+          <div class="record-field">
+            <span class="label">Geschlecht</span>
+            <strong id="recordSex">–</strong>
+          </div>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <dialog id="petDialog">
+    <form method="dialog" id="petForm">
+      <div class="dialog-head">
+        <h2 id="dialogTitle">Tier hinzufügen</h2>
+        <button class="icon-button" id="closeDialogBtn" type="button" aria-label="Schließen">✕</button>
+      </div>
+
+      <div class="dialog-body">
+        <div class="form-grid two">
+          <label>
+            Name *
+            <input id="petName" type="text" maxlength="60" autocomplete="off" required />
+          </label>
+
+          <label>
+            Tierart *
+            <input id="petSpecies" type="text" maxlength="60" placeholder="z. B. Katze, Hund, Kaninchen" required />
+          </label>
+        </div>
+
+        <div class="form-grid two section-gap">
+          <label>
+            Rasse
+            <input id="petBreed" type="text" maxlength="80" placeholder="optional" />
+          </label>
+
+          <label>
+            Geschlecht
+            <select id="petSex">
+              <option value="">Nicht angegeben</option>
+              <option value="female">Weiblich</option>
+              <option value="male">Männlich</option>
+              <option value="unknown">Unbekannt</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="form-grid two section-gap">
+          <label>
+            Geburtsdatum
+            <input id="petBirthDate" type="date" />
+          </label>
+
+          <label class="checkbox-row">
+            <input id="petBirthApprox" type="checkbox" />
+            <span>Geburtsdatum ist geschätzt</span>
+          </label>
+        </div>
+
+        <p class="form-hint">
+          Für den ersten Schritt speichern wir nur die grundlegenden Stammdaten.
+          Gesundheit, Gewicht und weitere Bereiche kommen anschließend in die Tierakte.
+        </p>
+      </div>
+
+      <div class="dialog-actions">
+        <button class="btn" id="cancelDialogBtn" type="button">Abbrechen</button>
+        <button class="btn primary" id="savePetBtn" type="submit">Tier speichern</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status"></div>
+
+  <script src="js/storage.js" defer></script>
+  <script src="js/ui.js" defer></script>
+  <script src="js/app.js" defer></script>
+</body>
+</html>
