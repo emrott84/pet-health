@@ -66,6 +66,12 @@
     return 'Nicht angegeben';
   }
 
+  function neuteredLabel(neutered) {
+    if (neutered === true) return 'Ja';
+    if (neutered === false) return 'Nein';
+    return 'Nicht angegeben';
+  }
+
   function renderHome(pets) {
     const empty = $('emptyState');
     const grid = $('petGrid');
@@ -107,6 +113,7 @@
       : 'Nicht angegeben';
     $('recordAge').textContent = age;
     $('recordSex').textContent = sexLabel(pet.sex);
+    $('recordNeutered').textContent = neuteredLabel(pet.neutered);
   }
 
   function fillPetForm(pet) {
@@ -116,17 +123,32 @@
     $('petBirthDate').value = pet?.birthDate || '';
     $('petBirthApprox').checked = Boolean(pet?.birthDateApproximate);
     $('petSex').value = pet?.sex || '';
+    $('petNeutered').value =
+    pet?.neutered === true
+      ? 'yes'
+      : pet?.neutered === false
+        ? 'no'
+        : '';
   }
 
   function readPetForm() {
+    const neuteredValue = $('petNeutered').value;
+
     return {
       name: $('petName').value.trim(),
       species: $('petSpecies').value.trim(),
       breed: $('petBreed').value.trim(),
       birthDate: $('petBirthDate').value,
       birthDateApproximate: $('petBirthApprox').checked,
-      sex: $('petSex').value
-    };
+      sex: $('petSex').value,
+
+      neutered:
+        neuteredValue === 'yes'
+          ? true
+          : neuteredValue === 'no'
+            ? false
+            : null
+    };                    
   }
 
   function showToast(message) {
