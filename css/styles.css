@@ -111,6 +111,77 @@ p { line-height: 1.45; }
   text-overflow: ellipsis;
 }
 
+.pet-card-wrap {
+  position: relative;
+}
+
+.pet-card {
+  padding-right: 62px;
+}
+
+.quick-add-toggle {
+  position: absolute;
+  top: 13px;
+  right: 13px;
+
+  width: 38px;
+  height: 38px;
+
+  display: grid;
+  place-items: center;
+
+  border: 1px solid var(--line);
+  border-radius: 50%;
+
+  background: var(--panel-2);
+  color: var(--accent);
+
+  font-size: 1.45rem;
+  line-height: 1;
+  font-weight: 500;
+
+  z-index: 2;
+}
+
+.quick-add-toggle:hover,
+.quick-add-toggle:focus-visible {
+  border-color: var(--accent);
+  outline: none;
+
+  background: var(--accent-soft);
+}
+
+.quick-entry {
+  margin-top: 8px;
+  padding: 13px;
+
+  border: 1px solid var(--line);
+  border-radius: 14px;
+
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.quick-weight-input {
+  position: relative;
+}
+
+.quick-weight-input input {
+  padding-right: 42px;
+}
+
+.quick-weight-input span {
+  position: absolute;
+
+  right: 12px;
+  top: 50%;
+
+  transform: translateY(-50%);
+
+  color: var(--muted);
+  pointer-events: none;
+}
+
 .pet-avatar {
   width: 46px;
   height: 46px;

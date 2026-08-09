@@ -105,6 +105,7 @@
   function renderHome(pets) {
     const empty = $('emptyState');
     const grid = $('petGrid');
+
     empty.classList.toggle('hidden', pets.length > 0);
     grid.classList.toggle('hidden', pets.length === 0);
 
@@ -113,22 +114,151 @@
       return;
     }
 
-    const sorted = [...pets].sort((a, b) => a.name.localeCompare(b.name, 'de'));
+    const sorted = [...pets].sort((a, b) =>
+      a.name.localeCompare(b.name, 'de')
+    );
+
     grid.innerHTML = sorted.map((pet) => {
-      const age = pet.birthDate ? calculateAge(pet.birthDate, pet.birthDateApproximate) : '';
-      const details = [pet.species, age].filter(Boolean).join(' · ');
+      const age = pet.birthDate
+        ? calculateAge(
+            pet.birthDate,
+            pet.birthDateApproximate
+          )
+        : '';
+
+      const details = [
+        pet.species,
+        age
+      ].filter(Boolean).join(' · ');
 
       return `
-        <button class="pet-card" type="button" data-pet-id="${escapeHtml(pet.id)}">
-          <div class="pet-avatar">${speciesIcon(pet.species)}</div>
-          <div class="pet-card-content">
-            <h2>${escapeHtml(pet.name)}</h2>
-            <p>${escapeHtml(details || 'Tierakte')}</p>
-            ${pet.breed ? `<p>${escapeHtml(pet.breed)}</p>` : ''}
+        <div class="pet-card-wrap">
+
+          <button
+            class="pet-card"
+            type="button"
+            data-pet-id="${escapeHtml(pet.id)}"
+          >
+            <div class="pet-avatar">
+              ${speciesIcon(pet.species)}
+            </div>
+
+            <div class="pet-card-content">
+              <h2>${escapeHtml(pet.name)}</h2>
+
+              <p>
+                ${escapeHtml(details || 'Tierakte')}
+              </p>
+
+              ${
+                pet.breed
+                  ? `<p>${escapeHtml(pet.breed)}</p>`
+                  : ''
+              }
+            </div>
+          </button>
+
+          <button
+            class="quick-add-toggle"
+            type="button"
+            data-quick-toggle="${escapeHtml(pet.id)}"
+            aria-label="Schnelleintrag für ${escapeHtml(pet.name)}"
+            aria-expanded="false"
+          >
+            +
+          </button>
+
+          <div
+            class="quick-entry hidden"
+            data-quick-entry="${escapeHtml(pet.id)}"
+          >
+            <label>
+              Gewicht heute
+
+              <div class="quick-weight-input">
+                <input
+                  type="number"
+                  inputmode="decimal"
+                  min="0.01"
+                  max="5000"
+                  step="0.001"
+                  placeholder="z. B. 4,725"
+                  data-quick-weight="${escapeHtml(pet.id)}"
+                />
+
+                <span>kg</span>
+              </div>
+            </label>
           </div>
-          <span class="card-arrow">›</span>
-        </button>`;
+
+        </div>
+      `;
     }).join('');
+  }
+
+  function toggleQuickEntry(petId) {
+    const panels = [
+      ...document.querySelectorAll(
+        '[data-quick-entry]'
+      )
+    ];
+
+    const buttons = [
+      ...document.querySelectorAll(
+        '[data-quick-toggle]'
+      )
+    ];
+
+    const targetPanel = panels.find(
+      panel =>
+        panel.dataset.quickEntry === petId
+    );
+
+    const targetButton = buttons.find(
+      button =>
+        button.dataset.quickToggle === petId
+    );
+
+    if (!targetPanel || !targetButton) {
+      return;
+    }
+
+    const willOpen =
+      targetPanel.classList.contains('hidden');
+
+    panels.forEach((panel) => {
+      panel.classList.add('hidden');
+    });
+
+    buttons.forEach((button) => {
+      button.textContent = '+';
+      button.setAttribute(
+        'aria-expanded',
+        'false'
+      );
+    });
+
+    if (!willOpen) {
+      return;
+    }
+
+    targetPanel.classList.remove('hidden');
+
+    targetButton.textContent = '×';
+
+    targetButton.setAttribute(
+      'aria-expanded',
+      'true'
+    );
+
+    const input =
+      targetPanel.querySelector(
+        '[data-quick-weight]'
+      );
+
+    if (input) {
+      setTimeout(() => input.focus(), 0);
+    }
   }
 
   function renderRecord(pet) {
@@ -225,6 +355,7 @@
     renderRecord,
     fillPetForm,
     readPetForm,
+    toggleQuickEntry,
     showToast
   };
 })();

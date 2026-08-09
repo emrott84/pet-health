@@ -149,11 +149,38 @@
     $('cancelDialogBtn').addEventListener('click', closeDialog);
     $('petForm').addEventListener('submit', handlePetSubmit);
 
-    $('petGrid').addEventListener('click', (event) => {
-      const card = event.target.closest('[data-pet-id]');
-      if (!card) return;
-      openPet(card.dataset.petId);
-    });
+    $('petGrid').addEventListener(
+      'click',
+      (event) => {
+
+        const quickToggle =
+          event.target.closest(
+            '[data-quick-toggle]'
+          );
+
+        if (quickToggle) {
+          event.preventDefault();
+          event.stopPropagation();
+
+          UI.toggleQuickEntry(
+            quickToggle.dataset.quickToggle
+          );
+
+          return;
+        }
+
+        const card =
+          event.target.closest(
+            '[data-pet-id]'
+          );
+
+        if (!card) return;
+
+        openPet(
+          card.dataset.petId
+        );
+      }
+    );
   }
 
   function init() {
