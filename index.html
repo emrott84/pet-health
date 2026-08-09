@@ -69,6 +69,10 @@
             <span class="label">Kastriert</span>
             <strong id="recordNeutered">–</strong>
           </div>
+          <div class="record-field">
+            <span class="label">Ziel-/Warnzone</span>
+            <strong id="recordTargetWeight">Nicht gesetzt</strong>
+          </div>
         </div>
       </article>
     </section>
@@ -120,6 +124,34 @@
               <option value="no">Nein</option>
               <option value="unknown">Unbekannt</option>
             </select>
+          </label>
+        </div>
+
+        <div class="form-grid two section-gap">
+          <label>
+            Zielgewicht Untergrenze (kg)
+            <input
+              id="petTargetWeightMin"
+              type="number"
+              inputmode="decimal"
+              min="0.01"
+              max="5000"
+              step="0.001"
+              placeholder="optional"
+            />
+          </label>
+
+          <label>
+            Zielgewicht Obergrenze (kg)
+            <input
+              id="petTargetWeightMax"
+              type="number"
+              inputmode="decimal"
+              min="0.01"
+              max="5000"
+              step="0.001"
+              placeholder="optional"
+            />
           </label>
         </div>
 

@@ -81,6 +81,37 @@
       }
     }
 
+    if (
+      data.targetWeightMin !== null &&
+      (
+        !Number.isFinite(data.targetWeightMin) ||
+        data.targetWeightMin <= 0
+      )
+    ) {
+      UI.showToast('Bitte eine gültige Untergrenze angeben.');
+      return;
+    }
+
+    if (
+      data.targetWeightMax !== null &&
+      (
+        !Number.isFinite(data.targetWeightMax) ||
+        data.targetWeightMax <= 0
+      )
+    ) {
+      UI.showToast('Bitte eine gültige Obergrenze angeben.');
+      return;
+    }
+
+    if (
+      data.targetWeightMin !== null &&
+      data.targetWeightMax !== null &&
+      data.targetWeightMin > data.targetWeightMax
+    ) {
+      UI.showToast('Die Untergrenze darf nicht über der Obergrenze liegen.');
+      return;
+    }
+
     if (editingPetId) {
       const pet = state.pets.find((item) => item.id === editingPetId);
       if (!pet) return;

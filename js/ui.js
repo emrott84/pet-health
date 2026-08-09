@@ -72,6 +72,36 @@
     return 'Nicht angegeben';
   }
 
+  function formatKg(value) {
+    if (value == null || !Number.isFinite(Number(value))) {
+      return null;
+    }
+
+    return Number(value).toLocaleString('de-DE', {
+      minimumFractionDigits: 3,
+      maximumFractionDigits: 3
+    }) + ' kg';
+  }
+
+  function targetWeightLabel(min, max) {
+    const minText = formatKg(min);
+    const maxText = formatKg(max);
+
+    if (minText && maxText) {
+      return `${minText} – ${maxText}`;
+    }
+
+    if (minText) {
+      return `ab ${minText}`;
+    }
+
+    if (maxText) {
+      return `bis ${maxText}`;
+    }
+
+    return 'Nicht gesetzt';
+  }
+
   function renderHome(pets) {
     const empty = $('emptyState');
     const grid = $('petGrid');
@@ -114,6 +144,11 @@
     $('recordAge').textContent = age;
     $('recordSex').textContent = sexLabel(pet.sex);
     $('recordNeutered').textContent = neuteredLabel(pet.neutered);
+    $('recordTargetWeight').textContent =
+    targetWeightLabel(
+      pet.targetWeightMin,
+      pet.targetWeightMax
+    );
   }
 
   function fillPetForm(pet) {
@@ -129,10 +164,34 @@
       : pet?.neutered === false
         ? 'no'
         : '';
+    $('petTargetWeightMin').value =
+      pet?.targetWeightMin != null
+        ? pet.targetWeightMin
+        : '';
+
+    $('petTargetWeightMax').value =
+      pet?.targetWeightMax != null
+        ? pet.targetWeightMax
+        : '';
   }
 
   function readPetForm() {
     const neuteredValue = $('petNeutered').value;
+    const rawTargetMin =
+      $('petTargetWeightMin').value.replace(',', '.');
+
+    const rawTargetMax =
+      $('petTargetWeightMax').value.replace(',', '.');
+
+    const targetWeightMin =
+      rawTargetMin === ''
+        ? null
+        : Number(rawTargetMin);
+
+    const targetWeightMax =
+      rawTargetMax === ''
+        ? null
+        : Number(rawTargetMax);
 
     return {
       name: $('petName').value.trim(),
@@ -147,7 +206,9 @@
           ? true
           : neuteredValue === 'no'
             ? false
-            : null
+            : null,
+      targetWeightMin,
+      targetWeightMax
     };                    
   }
 
