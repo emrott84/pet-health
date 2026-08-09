@@ -5,7 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="color-scheme" content="dark" />
   <title>Pet Health</title>
-  <link rel="stylesheet" href="css/styles.css?v=2" />
+  <link id="appStyles" rel="stylesheet" />
+
+  <script>
+    window.PET_HEALTH_CACHE_BUST = Date.now().toString();
+
+    document.getElementById('appStyles').href =
+      `css/styles.css?cb=${window.PET_HEALTH_CACHE_BUST}`;
+  </script>
 </head>
 <body>
   <main class="app">
@@ -146,8 +153,43 @@
 
   <div id="toast" class="toast" role="status"></div>
 
-  <script src="js/storage.js?v=2" defer></script>
-  <script src="js/ui.js?v=2" defer></script>
-  <script src="js/app.js?v=2" defer></script>
+  <script>
+    (() => {
+      'use strict';
+
+      const cacheBust =
+        window.PET_HEALTH_CACHE_BUST ||
+        Date.now().toString();
+
+      const scripts = [
+        'js/storage.js',
+        'js/ui.js',
+        'js/app.js'
+      ];
+
+      function loadScript(index) {
+        if (index >= scripts.length) return;
+
+        const script = document.createElement('script');
+
+        script.src =
+          `${scripts[index]}?cb=${cacheBust}`;
+
+        script.onload = () => {
+          loadScript(index + 1);
+        };
+
+        script.onerror = () => {
+          console.error(
+            `Pet Health: ${scripts[index]} konnte nicht geladen werden.`
+          );
+        };
+
+        document.body.appendChild(script);
+      }
+
+      loadScript(0);
+    })();
+  </script>
 </body>
 </html>
