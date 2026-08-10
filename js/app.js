@@ -151,103 +151,6 @@
     UI.showToast(`${pet.name} wurde angelegt.`);
   }
 
-  function saveQuickWeight(petId, input) {
-    const pet = state.pets.find(
-      (item) => item.id === petId
-    );
-
-    if (!pet) {
-      UI.showToast('Tier wurde nicht gefunden.');
-      return;
-    }
-
-    const rawValue = String(input.value)
-      .trim()
-      .replace(',', '.');
-
-    const weightKg = Number(rawValue);
-
-    if (
-      !Number.isFinite(weightKg) ||
-      weightKg <= 0 ||
-      weightKg > 5000
-    ) {
-      UI.showToast(
-        'Bitte ein gültiges Gewicht eingeben.'
-      );
-
-      input.focus();
-      return;
-    }
-
-    const date = todayISO();
-    const now = new Date().toISOString();
-
-    const existing = state.weights.find(
-      (weight) =>
-        weight.petId === petId &&
-        weight.date === date
-    );
-
-    if (existing) {
-      const replace = confirm(
-        `Für ${pet.name} gibt es heute bereits ` +
-        `${existing.weightKg.toLocaleString('de-DE', {
-          minimumFractionDigits: 3,
-          maximumFractionDigits: 3
-        })} kg.\n\n` +
-        `Durch ${weightKg.toLocaleString('de-DE', {
-          minimumFractionDigits: 3,
-          maximumFractionDigits: 3
-        })} kg ersetzen?`
-      );
-
-      if (!replace) {
-        input.focus();
-        return;
-      }
-
-      const oldWeight = existing.weightKg;
-      const oldUpdatedAt = existing.updatedAt;
-
-      existing.weightKg = weightKg;
-      existing.updatedAt = now;
-
-      if (!saveState()) {
-        existing.weightKg = oldWeight;
-        existing.updatedAt = oldUpdatedAt;
-        return;
-      }
-
-    } else {
-      const weight = Storage.createWeight({
-        petId,
-        date,
-        weightKg,
-        note: ''
-      });
-
-      state.weights.push(weight);
-
-      if (!saveState()) {
-        state.weights = state.weights.filter(
-          (item) => item.id !== weight.id
-        );
-
-        return;
-      }
-    }
-
-    UI.renderHome(state.pets);
-
-    UI.showToast(
-      `${weightKg.toLocaleString('de-DE', {
-        minimumFractionDigits: 3,
-        maximumFractionDigits: 3
-      })} kg für ${pet.name} gespeichert.`
-    );
-  }
-
   function getTodayWeight(petId) {
     const today = todayISO();
 
@@ -525,17 +428,55 @@
   }
 
   function bindEvents() {
-    $('addPetBtn').addEventListener('click', openCreateDialog);
-    $('emptyAddPetBtn').addEventListener('click', openCreateDialog);
-    $('backBtn').addEventListener('click', showHome);
-    $('editPetBtn').addEventListener('click', openEditDialog);
-    $('closeDialogBtn').addEventListener('click', closeDialog);
-    $('cancelDialogBtn').addEventListener('click', closeDialog);
-    $('petForm').addEventListener('submit', handlePetSubmit);
+    $('addPetBtn').addEventListener(
+      'click',
+      openCreateDialog
+    );
 
+    $('emptyAddPetBtn').addEventListener(
+      'click',
+      openCreateDialog
+    );
+
+    $('backBtn').addEventListener(
+      'click',
+      showHome
+    );
+
+    $('editPetBtn').addEventListener(
+      'click',
+      openEditDialog
+    );
+
+    $('closeDialogBtn').addEventListener(
+      'click',
+      closeDialog
+    );
+
+    $('cancelDialogBtn').addEventListener(
+      'click',
+      closeDialog
+    );
+
+    $('petForm').addEventListener(
+      'submit',
+      handlePetSubmit
+    );
+
+
+    /*
+    * Tierkarte:
+    * + = Schnelleintrag
+    * Rest der Karte = Tierakte
+    */
     $('petGrid').addEventListener(
       'click',
       (event) => {
+
+        const quickToggle =
+          event.target.closest(
+            '[data-quick-toggle]'
+          );
 
         if (quickToggle) {
           event.preventDefault();
@@ -558,6 +499,7 @@
           return;
         }
 
+
         const card =
           event.target.closest(
             '[data-pet-id]'
@@ -571,70 +513,93 @@
       }
     );
 
+
+    /*
+    * Tastatursteuerung im Schnelleintrag
+    */
     $('petGrid').addEventListener(
-    'click',
-    (event) => {
-      // dein bestehender Code bleibt hier unverändert
-    }
-  );
+      'keydown',
+      (event) => {
 
-  $('petGrid').addEventListener(
-    'keydown',
-    (event) => {
-
-      const weightInput =
-        event.target.closest(
-          '[data-quick-weight]'
-        );
-
-      if (
-        weightInput &&
-        (
-          event.key === 'Enter' ||
-          event.key === 'Tab'
-        )
-      ) {
-        event.preventDefault();
-
-        const petId =
-          weightInput.dataset.quickWeight;
-
-        const saved =
-          saveQuickWeight(
-            petId,
-            weightInput
+        const weightInput =
+          event.target.closest(
+            '[data-quick-weight]'
           );
 
-        if (saved) {
-          focusQuickJournal(
-            petId
-          );
+        if (
+          weightInput &&
+          (
+            event.key === 'Enter' ||
+            event.key === 'Tab'
+          )
+        ) {
+          event.preventDefault();
+
+          const petId =
+            weightInput.dataset.quickWeight;
+
+          const saved =
+            saveQuickWeight(
+              petId,
+              weightInput
+            );
+
+          if (saved) {
+            focusQuickJournal(
+              petId
+            );
+          }
+
+          return;
         }
 
-        return;
+
+        const journalInput =
+          event.target.closest(
+            '[data-quick-journal]'
+          );
+
+        if (
+          journalInput &&
+          event.key === 'Enter' &&
+          !event.shiftKey
+        ) {
+          event.preventDefault();
+
+          saveQuickJournal(
+            journalInput.dataset.quickJournal,
+            journalInput
+          );
+        }
       }
+    );
 
 
-      const journalInput =
-        event.target.closest(
-          '[data-quick-journal]'
-        );
+    /*
+    * Dialog schließen,
+    * wenn außerhalb geklickt wird
+    */
+    $('petDialog').addEventListener(
+      'click',
+      (event) => {
 
-      if (
-        journalInput &&
-        event.key === 'Enter' &&
-        !event.shiftKey
-      ) {
-        event.preventDefault();
+        const dialog =
+          $('petDialog');
 
-        saveQuickJournal(
-          journalInput.dataset
-            .quickJournal,
-          journalInput
-        );
+        const rect =
+          dialog.getBoundingClientRect();
+
+        const outside =
+          event.clientX < rect.left ||
+          event.clientX > rect.right ||
+          event.clientY < rect.top ||
+          event.clientY > rect.bottom;
+
+        if (outside) {
+          closeDialog();
+        }
       }
-    }
-  );
+    );
   }
 
   function init() {
