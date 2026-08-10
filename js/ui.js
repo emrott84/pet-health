@@ -189,6 +189,20 @@
                 <span>kg</span>
               </div>
             </label>
+
+            <label>
+              Bemerkung
+
+              <textarea
+                rows="2"
+                placeholder="Wie geht's ${escapeHtml(pet.name)} heute?"
+                data-quick-journal="${escapeHtml(pet.id)}"
+              ></textarea>
+            </label>
+
+            <div class="quick-entry-hint">
+              Enter speichert · Shift + Enter für Zeilenumbruch
+            </div>
           </div>
 
         </div>
@@ -209,40 +223,58 @@
       )
     ];
 
-    const targetPanel = panels.find(
-      panel =>
-        panel.dataset.quickEntry === petId
-    );
+    const targetPanel =
+      panels.find(
+        (panel) =>
+          panel.dataset.quickEntry ===
+          petId
+      );
 
-    const targetButton = buttons.find(
-      button =>
-        button.dataset.quickToggle === petId
-    );
+    const targetButton =
+      buttons.find(
+        (button) =>
+          button.dataset.quickToggle ===
+          petId
+      );
 
-    if (!targetPanel || !targetButton) {
-      return;
+    if (
+      !targetPanel ||
+      !targetButton
+    ) {
+      return false;
     }
 
     const willOpen =
-      targetPanel.classList.contains('hidden');
-
-    panels.forEach((panel) => {
-      panel.classList.add('hidden');
-    });
-
-    buttons.forEach((button) => {
-      button.textContent = '+';
-      button.setAttribute(
-        'aria-expanded',
-        'false'
+      targetPanel.classList.contains(
+        'hidden'
       );
-    });
+
+    panels.forEach(
+      (panel) => {
+        panel.classList.add(
+          'hidden'
+        );
+      }
+    );
+
+    buttons.forEach(
+      (button) => {
+        button.textContent = '+';
+
+        button.setAttribute(
+          'aria-expanded',
+          'false'
+        );
+      }
+    );
 
     if (!willOpen) {
-      return;
+      return false;
     }
 
-    targetPanel.classList.remove('hidden');
+    targetPanel.classList.remove(
+      'hidden'
+    );
 
     targetButton.textContent = '×';
 
@@ -251,14 +283,7 @@
       'true'
     );
 
-    const input =
-      targetPanel.querySelector(
-        '[data-quick-weight]'
-      );
-
-    if (input) {
-      setTimeout(() => input.focus(), 0);
-    }
+    return true;
   }
 
   function renderRecord(pet) {

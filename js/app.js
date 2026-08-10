@@ -9,6 +9,17 @@
   let activePetId = null;
   let editingPetId = null;
 
+  function todayISO() {
+    const now = new Date();
+    const offset = now.getTimezoneOffset();
+
+    return new Date(
+      now.getTime() - offset * 60000
+    )
+      .toISOString()
+      .slice(0, 10);
+  }
+
   function saveState() {
     try {
       Storage.save(state);
@@ -140,6 +151,379 @@
     UI.showToast(`${pet.name} wurde angelegt.`);
   }
 
+  function saveQuickWeight(petId, input) {
+    const pet = state.pets.find(
+      (item) => item.id === petId
+    );
+
+    if (!pet) {
+      UI.showToast('Tier wurde nicht gefunden.');
+      return;
+    }
+
+    const rawValue = String(input.value)
+      .trim()
+      .replace(',', '.');
+
+    const weightKg = Number(rawValue);
+
+    if (
+      !Number.isFinite(weightKg) ||
+      weightKg <= 0 ||
+      weightKg > 5000
+    ) {
+      UI.showToast(
+        'Bitte ein gültiges Gewicht eingeben.'
+      );
+
+      input.focus();
+      return;
+    }
+
+    const date = todayISO();
+    const now = new Date().toISOString();
+
+    const existing = state.weights.find(
+      (weight) =>
+        weight.petId === petId &&
+        weight.date === date
+    );
+
+    if (existing) {
+      const replace = confirm(
+        `Für ${pet.name} gibt es heute bereits ` +
+        `${existing.weightKg.toLocaleString('de-DE', {
+          minimumFractionDigits: 3,
+          maximumFractionDigits: 3
+        })} kg.\n\n` +
+        `Durch ${weightKg.toLocaleString('de-DE', {
+          minimumFractionDigits: 3,
+          maximumFractionDigits: 3
+        })} kg ersetzen?`
+      );
+
+      if (!replace) {
+        input.focus();
+        return;
+      }
+
+      const oldWeight = existing.weightKg;
+      const oldUpdatedAt = existing.updatedAt;
+
+      existing.weightKg = weightKg;
+      existing.updatedAt = now;
+
+      if (!saveState()) {
+        existing.weightKg = oldWeight;
+        existing.updatedAt = oldUpdatedAt;
+        return;
+      }
+
+    } else {
+      const weight = Storage.createWeight({
+        petId,
+        date,
+        weightKg,
+        note: ''
+      });
+
+      state.weights.push(weight);
+
+      if (!saveState()) {
+        state.weights = state.weights.filter(
+          (item) => item.id !== weight.id
+        );
+
+        return;
+      }
+    }
+
+    UI.renderHome(state.pets);
+
+    UI.showToast(
+      `${weightKg.toLocaleString('de-DE', {
+        minimumFractionDigits: 3,
+        maximumFractionDigits: 3
+      })} kg für ${pet.name} gespeichert.`
+    );
+  }
+
+  function getTodayWeight(petId) {
+    const today = todayISO();
+
+    return state.weights.find(
+      (weight) =>
+        weight.petId === petId &&
+        weight.date === today
+    ) || null;
+  }
+
+
+  function prepareQuickEntry(petId) {
+    const panel = [
+      ...document.querySelectorAll(
+        '[data-quick-entry]'
+      )
+    ].find(
+      (item) =>
+        item.dataset.quickEntry ===
+        petId
+    );
+
+    if (!panel) return;
+
+    const weightInput =
+      panel.querySelector(
+        '[data-quick-weight]'
+      );
+
+    const journalInput =
+      panel.querySelector(
+        '[data-quick-journal]'
+      );
+
+    const todayWeight =
+      getTodayWeight(petId);
+
+    if (weightInput) {
+      weightInput.value =
+        todayWeight
+          ? Number(
+              todayWeight.weightKg
+            ).toFixed(3)
+          : '';
+    }
+
+    setTimeout(() => {
+      if (
+        todayWeight &&
+        journalInput
+      ) {
+        journalInput.focus();
+        return;
+      }
+
+      weightInput?.focus();
+    }, 0);
+  }
+
+
+  function focusQuickJournal(petId) {
+    const panel = [
+      ...document.querySelectorAll(
+        '[data-quick-entry]'
+      )
+    ].find(
+      (item) =>
+        item.dataset.quickEntry ===
+        petId
+    );
+
+    const journalInput =
+      panel?.querySelector(
+        '[data-quick-journal]'
+      );
+
+    journalInput?.focus();
+  }
+
+
+  function saveQuickWeight(
+    petId,
+    input
+  ) {
+    const pet =
+      state.pets.find(
+        (item) =>
+          item.id === petId
+      );
+
+    if (!pet) {
+      UI.showToast(
+        'Tier wurde nicht gefunden.'
+      );
+
+      return false;
+    }
+
+    const rawValue =
+      String(input.value)
+        .trim()
+        .replace(',', '.');
+
+    /*
+    * Leeres Feld bedeutet:
+    * Gewicht heute überspringen.
+    */
+    if (!rawValue) {
+      return true;
+    }
+
+    const weightKg =
+      Number(rawValue);
+
+    if (
+      !Number.isFinite(
+        weightKg
+      ) ||
+      weightKg <= 0 ||
+      weightKg > 5000
+    ) {
+      UI.showToast(
+        'Bitte ein gültiges Gewicht eingeben.'
+      );
+
+      input.focus();
+
+      return false;
+    }
+
+    const date = todayISO();
+    const now =
+      new Date().toISOString();
+
+    const existing =
+      getTodayWeight(petId);
+
+    if (existing) {
+      const previousWeight =
+        existing.weightKg;
+
+      const previousUpdatedAt =
+        existing.updatedAt;
+
+      existing.weightKg =
+        weightKg;
+
+      existing.updatedAt =
+        now;
+
+      if (!saveState()) {
+        existing.weightKg =
+          previousWeight;
+
+        existing.updatedAt =
+          previousUpdatedAt;
+
+        return false;
+      }
+
+      UI.showToast(
+        `Gewicht für ${pet.name} auf ` +
+        `${weightKg.toLocaleString(
+          'de-DE',
+          {
+            minimumFractionDigits: 3,
+            maximumFractionDigits: 3
+          }
+        )} kg aktualisiert.`
+      );
+
+      return true;
+    }
+
+    const weight =
+      Storage.createWeight({
+        petId,
+        date,
+        weightKg,
+        note: ''
+      });
+
+    state.weights.push(weight);
+
+    if (!saveState()) {
+      state.weights =
+        state.weights.filter(
+          (item) =>
+            item.id !== weight.id
+        );
+
+      return false;
+    }
+
+    UI.showToast(
+      `${weightKg.toLocaleString(
+        'de-DE',
+        {
+          minimumFractionDigits: 3,
+          maximumFractionDigits: 3
+        }
+      )} kg für ${pet.name} gespeichert.`
+    );
+
+    return true;
+  }
+
+
+  function saveQuickJournal(
+    petId,
+    input
+  ) {
+    const pet =
+      state.pets.find(
+        (item) =>
+          item.id === petId
+      );
+
+    if (!pet) {
+      UI.showToast(
+        'Tier wurde nicht gefunden.'
+      );
+
+      return false;
+    }
+
+    const text =
+      input.value.trim();
+
+    /*
+    * Leere Bemerkung:
+    * nichts speichern,
+    * Schnelleingabe nur schließen.
+    */
+    if (!text) {
+      UI.toggleQuickEntry(
+        petId
+      );
+
+      return true;
+    }
+
+    const entry =
+      Storage.createJournalEntry({
+        petId,
+        date: todayISO(),
+        text
+      });
+
+    state.journalEntries.push(
+      entry
+    );
+
+    if (!saveState()) {
+      state.journalEntries =
+        state.journalEntries.filter(
+          (item) =>
+            item.id !== entry.id
+        );
+
+      return false;
+    }
+
+    input.value = '';
+
+    UI.toggleQuickEntry(
+      petId
+    );
+
+    UI.showToast(
+      `Bemerkung für ${pet.name} gespeichert.`
+    );
+
+    return true;
+  }
+
   function bindEvents() {
     $('addPetBtn').addEventListener('click', openCreateDialog);
     $('emptyAddPetBtn').addEventListener('click', openCreateDialog);
@@ -153,18 +537,23 @@
       'click',
       (event) => {
 
-        const quickToggle =
-          event.target.closest(
-            '[data-quick-toggle]'
-          );
-
         if (quickToggle) {
           event.preventDefault();
           event.stopPropagation();
 
-          UI.toggleQuickEntry(
-            quickToggle.dataset.quickToggle
-          );
+          const petId =
+            quickToggle.dataset.quickToggle;
+
+          const opened =
+            UI.toggleQuickEntry(
+              petId
+            );
+
+          if (opened) {
+            prepareQuickEntry(
+              petId
+            );
+          }
 
           return;
         }
@@ -181,6 +570,71 @@
         );
       }
     );
+
+    $('petGrid').addEventListener(
+    'click',
+    (event) => {
+      // dein bestehender Code bleibt hier unverändert
+    }
+  );
+
+  $('petGrid').addEventListener(
+    'keydown',
+    (event) => {
+
+      const weightInput =
+        event.target.closest(
+          '[data-quick-weight]'
+        );
+
+      if (
+        weightInput &&
+        (
+          event.key === 'Enter' ||
+          event.key === 'Tab'
+        )
+      ) {
+        event.preventDefault();
+
+        const petId =
+          weightInput.dataset.quickWeight;
+
+        const saved =
+          saveQuickWeight(
+            petId,
+            weightInput
+          );
+
+        if (saved) {
+          focusQuickJournal(
+            petId
+          );
+        }
+
+        return;
+      }
+
+
+      const journalInput =
+        event.target.closest(
+          '[data-quick-journal]'
+        );
+
+      if (
+        journalInput &&
+        event.key === 'Enter' &&
+        !event.shiftKey
+      ) {
+        event.preventDefault();
+
+        saveQuickJournal(
+          journalInput.dataset
+            .quickJournal,
+          journalInput
+        );
+      }
+    }
+  );
   }
 
   function init() {

@@ -19,7 +19,7 @@ body {
   color: var(--text);
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
-button, input, select { font: inherit; }
+button, input, select, textarea { font: inherit; }
 button { cursor: pointer; }
 
 .app {
@@ -165,11 +165,22 @@ p { line-height: 1.45; }
 }
 
 .quick-entry {
-  padding: 13px 15px 15px;
+  display: grid;
+  gap: 11px;
 
-  border-top: 1px solid var(--line);
+  padding: 6px 15px 15px;
 
   background: var(--panel);
+}
+
+.quick-entry textarea {
+  min-height: 64px;
+  resize: vertical;
+}
+
+.quick-entry-hint {
+  color: var(--muted);
+  font-size: 0.76rem;
 }
 
 .quick-weight-input {
@@ -301,7 +312,9 @@ label {
   color: var(--muted);
   font-size: 0.87rem;
 }
-input, select {
+input,
+select,
+textarea {
   width: 100%;
   border: 1px solid var(--line);
   background: var(--panel-2);

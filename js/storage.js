@@ -2,19 +2,23 @@
   'use strict';
 
   const APP_ID = 'pet-health';
-  const VERSION = 2;
-  const STORAGE_KEY = 'petHealth.v2';
+  const VERSION = 3;
+
+  const STORAGE_KEY = 'petHealth.v3';
+  const LEGACY_V2_KEY = 'petHealth.v2';
   const LEGACY_V1_KEY = 'petHealth.v1';
 
   function makeId(prefix = 'id') {
-    if (globalThis.crypto && typeof crypto.randomUUID === 'function') {
+    if (
+      globalThis.crypto &&
+      typeof crypto.randomUUID === 'function'
+    ) {
       return crypto.randomUUID();
     }
 
-    return `${prefix}-` +
-      Date.now().toString(36) +
-      '-' +
-      Math.random().toString(36).slice(2, 10);
+    return `${prefix}-${Date.now().toString(36)}-${Math.random()
+      .toString(36)
+      .slice(2, 10)}`;
   }
 
   function defaultState() {
@@ -25,8 +29,10 @@
       version: VERSION,
       createdAt: now,
       updatedAt: now,
+
       pets: [],
-      weights: []
+      weights: [],
+      journalEntries: []
     };
   }
 
@@ -34,12 +40,29 @@
     const now = new Date().toISOString();
 
     return {
-      id: String(condition?.id || makeId('condition')),
-      name: String(condition?.name || '').trim(),
-      note: String(condition?.note || '').trim(),
-      active: condition?.active !== false,
-      createdAt: condition?.createdAt || now,
-      updatedAt: condition?.updatedAt || condition?.createdAt || now
+      id: String(
+        condition?.id ||
+        makeId('condition')
+      ),
+
+      name: String(
+        condition?.name || ''
+      ).trim(),
+
+      note: String(
+        condition?.note || ''
+      ).trim(),
+
+      active:
+        condition?.active !== false,
+
+      createdAt:
+        condition?.createdAt || now,
+
+      updatedAt:
+        condition?.updatedAt ||
+        condition?.createdAt ||
+        now
     };
   }
 
@@ -47,13 +70,33 @@
     const now = new Date().toISOString();
 
     return {
-      id: String(medication?.id || makeId('medication')),
-      name: String(medication?.name || '').trim(),
-      dose: String(medication?.dose || '').trim(),
-      note: String(medication?.note || '').trim(),
-      active: medication?.active !== false,
-      createdAt: medication?.createdAt || now,
-      updatedAt: medication?.updatedAt || medication?.createdAt || now
+      id: String(
+        medication?.id ||
+        makeId('medication')
+      ),
+
+      name: String(
+        medication?.name || ''
+      ).trim(),
+
+      dose: String(
+        medication?.dose || ''
+      ).trim(),
+
+      note: String(
+        medication?.note || ''
+      ).trim(),
+
+      active:
+        medication?.active !== false,
+
+      createdAt:
+        medication?.createdAt || now,
+
+      updatedAt:
+        medication?.updatedAt ||
+        medication?.createdAt ||
+        now
     };
   }
 
@@ -68,49 +111,94 @@
           : null;
 
     return {
-      id: String(pet?.id || makeId('pet')),
-      name: String(pet?.name || '').trim(),
-      species: String(pet?.species || '').trim(),
-      breed: String(pet?.breed || '').trim(),
+      id: String(
+        pet?.id || makeId('pet')
+      ),
 
-      birthDate: pet?.birthDate
-        ? String(pet.birthDate)
-        : '',
+      name: String(
+        pet?.name || ''
+      ).trim(),
 
-      birthDateApproximate: Boolean(pet?.birthDateApproximate),
+      species: String(
+        pet?.species || ''
+      ).trim(),
 
-      sex: ['female', 'male', 'unknown'].includes(pet?.sex)
-        ? pet.sex
-        : '',
+      breed: String(
+        pet?.breed || ''
+      ).trim(),
+
+      birthDate:
+        pet?.birthDate
+          ? String(pet.birthDate)
+          : '',
+
+      birthDateApproximate:
+        Boolean(
+          pet?.birthDateApproximate
+        ),
+
+      sex:
+        [
+          'female',
+          'male',
+          'unknown'
+        ].includes(pet?.sex)
+          ? pet.sex
+          : '',
 
       neutered,
 
       targetWeightMin:
         pet?.targetWeightMin != null &&
-        Number.isFinite(Number(pet.targetWeightMin))
-          ? Number(pet.targetWeightMin)
+        Number.isFinite(
+          Number(pet.targetWeightMin)
+        )
+          ? Number(
+              pet.targetWeightMin
+            )
           : null,
 
       targetWeightMax:
         pet?.targetWeightMax != null &&
-        Number.isFinite(Number(pet.targetWeightMax))
-          ? Number(pet.targetWeightMax)
+        Number.isFinite(
+          Number(pet.targetWeightMax)
+        )
+          ? Number(
+              pet.targetWeightMax
+            )
           : null,
 
-      conditions: Array.isArray(pet?.conditions)
-        ? pet.conditions
-            .map(normalizeCondition)
-            .filter((item) => item.name)
-        : [],
+      conditions:
+        Array.isArray(
+          pet?.conditions
+        )
+          ? pet.conditions
+              .map(
+                normalizeCondition
+              )
+              .filter(
+                (item) => item.name
+              )
+          : [],
 
-      medications: Array.isArray(pet?.medications)
-        ? pet.medications
-            .map(normalizeMedication)
-            .filter((item) => item.name)
-        : [],
+      medications:
+        Array.isArray(
+          pet?.medications
+        )
+          ? pet.medications
+              .map(
+                normalizeMedication
+              )
+              .filter(
+                (item) => item.name
+              )
+          : [],
 
-      createdAt: pet?.createdAt || now,
-      updatedAt: pet?.updatedAt || now
+      createdAt:
+        pet?.createdAt || now,
+
+      updatedAt:
+        pet?.updatedAt || now
     };
   }
 
@@ -118,22 +206,88 @@
     const now = new Date().toISOString();
 
     return {
-      id: String(weight?.id || makeId('weight')),
-      petId: String(weight?.petId || ''),
-      date: String(weight?.date || ''),
-      weightKg: Number(weight?.weightKg),
-      note: String(weight?.note || '').trim(),
-      createdAt: weight?.createdAt || now,
-      updatedAt: weight?.updatedAt || weight?.createdAt || now
+      id: String(
+        weight?.id ||
+        makeId('weight')
+      ),
+
+      petId: String(
+        weight?.petId || ''
+      ),
+
+      date: String(
+        weight?.date || ''
+      ),
+
+      weightKg:
+        Number(weight?.weightKg),
+
+      note: String(
+        weight?.note || ''
+      ).trim(),
+
+      createdAt:
+        weight?.createdAt || now,
+
+      updatedAt:
+        weight?.updatedAt ||
+        weight?.createdAt ||
+        now
     };
   }
 
-  function validateCurrentState(value) {
+  function normalizeJournalEntry(entry) {
+    const now =
+      new Date().toISOString();
+
+    return {
+      id: String(
+        entry?.id ||
+        makeId('journal')
+      ),
+
+      petId: String(
+        entry?.petId || ''
+      ),
+
+      date: String(
+        entry?.date || ''
+      ),
+
+      text: String(
+        entry?.text || ''
+      ).trim(),
+
+      createdAt:
+        entry?.createdAt || now,
+
+      updatedAt:
+        entry?.updatedAt ||
+        entry?.createdAt ||
+        now
+    };
+  }
+
+  function validateV3State(value) {
     return (
       value &&
       typeof value === 'object' &&
       value.app === APP_ID &&
-      Number(value.version) === VERSION &&
+      Number(value.version) === 3 &&
+      Array.isArray(value.pets) &&
+      Array.isArray(value.weights) &&
+      Array.isArray(
+        value.journalEntries
+      )
+    );
+  }
+
+  function validateV2State(value) {
+    return (
+      value &&
+      typeof value === 'object' &&
+      value.app === APP_ID &&
+      Number(value.version) === 2 &&
       Array.isArray(value.pets) &&
       Array.isArray(value.weights)
     );
@@ -152,49 +306,120 @@
   function normalizeCurrentState(value) {
     const base = defaultState();
 
-    const pets = value.pets.map(normalizePet);
-    const petIds = new Set(
-      pets.map((pet) => pet.id)
-    );
-
-    const weights = value.weights
-      .map(normalizeWeight)
-      .filter((weight) =>
-        petIds.has(weight.petId) &&
-        /^\d{4}-\d{2}-\d{2}$/.test(weight.date) &&
-        Number.isFinite(weight.weightKg) &&
-        weight.weightKg > 0
+    const pets =
+      value.pets.map(
+        normalizePet
       );
+
+    const petIds =
+      new Set(
+        pets.map(
+          (pet) => pet.id
+        )
+      );
+
+    const weights =
+      value.weights
+        .map(normalizeWeight)
+        .filter(
+          (weight) =>
+            petIds.has(
+              weight.petId
+            ) &&
+            /^\d{4}-\d{2}-\d{2}$/.test(
+              weight.date
+            ) &&
+            Number.isFinite(
+              weight.weightKg
+            ) &&
+            weight.weightKg > 0
+        );
+
+    const journalEntries =
+      value.journalEntries
+        .map(
+          normalizeJournalEntry
+        )
+        .filter(
+          (entry) =>
+            petIds.has(
+              entry.petId
+            ) &&
+            /^\d{4}-\d{2}-\d{2}$/.test(
+              entry.date
+            ) &&
+            entry.text
+        );
 
     return {
       ...base,
       ...value,
+
       app: APP_ID,
       version: VERSION,
+
       pets,
-      weights
+      weights,
+      journalEntries
     };
   }
 
-  function migrateV1(value) {
-    const now = new Date().toISOString();
+  function migrateV2(value) {
+    const now =
+      new Date().toISOString();
 
     return {
       app: APP_ID,
       version: VERSION,
-      createdAt: value.createdAt || now,
+
+      createdAt:
+        value.createdAt || now,
+
       updatedAt: now,
 
-      pets: value.pets.map(normalizePet),
+      pets:
+        value.pets.map(
+          normalizePet
+        ),
 
-      weights: []
+      weights:
+        value.weights.map(
+          normalizeWeight
+        ),
+
+      journalEntries: []
+    };
+  }
+
+  function migrateV1(value) {
+    const now =
+      new Date().toISOString();
+
+    return {
+      app: APP_ID,
+      version: VERSION,
+
+      createdAt:
+        value.createdAt || now,
+
+      updatedAt: now,
+
+      pets:
+        value.pets.map(
+          normalizePet
+        ),
+
+      weights: [],
+      journalEntries: []
     };
   }
 
   function save(state) {
     state.app = APP_ID;
     state.version = VERSION;
-    state.updatedAt = new Date().toISOString();
+
+    state.updatedAt =
+      new Date().toISOString();
 
     localStorage.setItem(
       STORAGE_KEY,
@@ -205,38 +430,80 @@
   function load() {
     try {
       const currentRaw =
-        localStorage.getItem(STORAGE_KEY);
+        localStorage.getItem(
+          STORAGE_KEY
+        );
 
       if (currentRaw) {
-        const parsed = JSON.parse(currentRaw);
+        const parsed =
+          JSON.parse(currentRaw);
 
-        if (!validateCurrentState(parsed)) {
+        if (
+          !validateV3State(parsed)
+        ) {
+          throw new Error(
+            'Ungültiger Pet-Health-v3-Datensatz.'
+          );
+        }
+
+        return normalizeCurrentState(
+          parsed
+        );
+      }
+
+      const v2Raw =
+        localStorage.getItem(
+          LEGACY_V2_KEY
+        );
+
+      if (v2Raw) {
+        const parsed =
+          JSON.parse(v2Raw);
+
+        if (
+          !validateV2State(parsed)
+        ) {
           throw new Error(
             'Ungültiger Pet-Health-v2-Datensatz.'
           );
         }
 
-        return normalizeCurrentState(parsed);
+        const migrated =
+          migrateV2(parsed);
+
+        save(migrated);
+
+        console.info(
+          'Pet Health: v2 → v3 erfolgreich migriert.'
+        );
+
+        return migrated;
       }
 
-      const legacyRaw =
-        localStorage.getItem(LEGACY_V1_KEY);
+      const v1Raw =
+        localStorage.getItem(
+          LEGACY_V1_KEY
+        );
 
-      if (legacyRaw) {
-        const parsed = JSON.parse(legacyRaw);
+      if (v1Raw) {
+        const parsed =
+          JSON.parse(v1Raw);
 
-        if (!validateV1State(parsed)) {
+        if (
+          !validateV1State(parsed)
+        ) {
           throw new Error(
             'Ungültiger Pet-Health-v1-Datensatz.'
           );
         }
 
-        const migrated = migrateV1(parsed);
+        const migrated =
+          migrateV1(parsed);
 
         save(migrated);
 
         console.info(
-          'Pet Health: Daten erfolgreich von v1 auf v2 migriert.'
+          'Pet Health: v1 → v3 erfolgreich migriert.'
         );
 
         return migrated;
@@ -257,18 +524,42 @@
   function createPet(data) {
     return normalizePet({
       ...data,
+
       id: makeId('pet'),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+
+      createdAt:
+        new Date().toISOString(),
+
+      updatedAt:
+        new Date().toISOString()
     });
   }
 
   function createWeight(data) {
     return normalizeWeight({
       ...data,
+
       id: makeId('weight'),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+
+      createdAt:
+        new Date().toISOString(),
+
+      updatedAt:
+        new Date().toISOString()
+    });
+  }
+
+  function createJournalEntry(data) {
+    return normalizeJournalEntry({
+      ...data,
+
+      id: makeId('journal'),
+
+      createdAt:
+        new Date().toISOString(),
+
+      updatedAt:
+        new Date().toISOString()
     });
   }
 
@@ -276,6 +567,7 @@
     load,
     save,
     createPet,
-    createWeight
+    createWeight,
+    createJournalEntry
   };
 })();
