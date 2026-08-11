@@ -102,7 +102,96 @@
     return 'Nicht gesetzt';
   }
 
-  function renderHome(pets) {
+  function getWeightSummary(
+    petId,
+    weights = []
+  ) {
+    const petWeights =
+      weights
+        .filter(
+          (weight) =>
+            weight.petId === petId &&
+            Number.isFinite(
+              Number(weight.weightKg)
+            )
+        )
+        .sort(
+          (a, b) =>
+            String(b.date).localeCompare(
+              String(a.date)
+            )
+        );
+
+    const current =
+      petWeights[0] || null;
+
+    const previous =
+      petWeights[1] || null;
+
+    if (!current) {
+      return {
+        current: null,
+        trend: null
+      };
+    }
+
+    if (!previous) {
+      return {
+        current,
+        trend: null
+      };
+    }
+
+    const currentKg =
+      Number(current.weightKg);
+
+    const previousKg =
+      Number(previous.weightKg);
+
+    if (previousKg <= 0) {
+      return {
+        current,
+        trend: null
+      };
+    }
+
+    const change =
+      (currentKg - previousKg) /
+      previousKg;
+
+    if (change >= 0.005) {
+      return {
+        current,
+        trend: {
+          symbol: '↑',
+          label: 'steigend'
+        }
+      };
+    }
+
+    if (change <= -0.005) {
+      return {
+        current,
+        trend: {
+          symbol: '↓',
+          label: 'fallend'
+        }
+      };
+    }
+
+    return {
+      current,
+      trend: {
+        symbol: '→',
+        label: 'weitgehend unverändert'
+      }
+    };
+  }
+
+  function renderHome(
+    pets,
+    weights = []
+  ) {                       
     const empty = $('emptyState');
     const grid = $('petGrid');
 
@@ -119,6 +208,17 @@
     );
 
     grid.innerHTML = sorted.map((pet) => {
+      const weightSummary =
+        getWeightSummary(
+          pet.id,
+          weights
+        );
+
+      const currentWeight =
+        weightSummary.current;
+
+      const trend =
+        weightSummary.trend;
       const age = pet.birthDate
         ? calculateAge(
             pet.birthDate,
@@ -155,6 +255,40 @@
                   ? `<p>${escapeHtml(pet.breed)}</p>`
                   : ''
               }
+              <div
+                class="pet-card-weight ${
+                  currentWeight
+                    ? ''
+                    : 'hidden'
+                }"
+                data-card-weight="${escapeHtml(pet.id)}"
+              >
+                ${
+                  currentWeight
+                    ? `
+                      <strong>
+                        ${formatKg(
+                          currentWeight.weightKg
+                        )}
+                      </strong>
+
+                      ${
+                        trend
+                          ? `
+                            <span
+                              class="weight-trend"
+                              title="Tendenz: ${escapeHtml(trend.label)}"
+                              aria-label="Tendenz: ${escapeHtml(trend.label)}"
+                            >
+                              ${trend.symbol}
+                            </span>
+                          `
+                          : ''
+                      }
+                    `
+                    : ''
+                }
+              </div>
             </div>
           </button>
 
@@ -208,6 +342,61 @@
         </div>
       `;
     }).join('');
+  }
+
+  function updateCardWeight(
+    petId,
+    weights = []
+  ) {
+    const container =
+      document.querySelector(
+        `[data-card-weight="${petId}"]`
+      );
+
+    if (!container) return;
+
+    const {
+      current,
+      trend
+    } = getWeightSummary(
+      petId,
+      weights
+    );
+
+    if (!current) {
+      container.innerHTML = '';
+      container.classList.add(
+        'hidden'
+      );
+
+      return;
+    }
+
+    container.classList.remove(
+      'hidden'
+    );
+
+    container.innerHTML = `
+      <strong>
+        ${formatKg(
+          current.weightKg
+        )}
+      </strong>
+
+      ${
+        trend
+          ? `
+            <span
+              class="weight-trend"
+              title="Tendenz: ${escapeHtml(trend.label)}"
+              aria-label="Tendenz: ${escapeHtml(trend.label)}"
+            >
+              ${trend.symbol}
+            </span>
+          `
+          : ''
+      }
+    `;
   }
 
   function toggleQuickEntry(petId) {
@@ -381,6 +570,7 @@
     fillPetForm,
     readPetForm,
     toggleQuickEntry,
+    updateCardWeight,
     showToast
   };
 })();

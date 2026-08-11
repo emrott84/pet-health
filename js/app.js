@@ -35,7 +35,10 @@
     activePetId = null;
     $('homeView').classList.remove('hidden');
     $('petView').classList.add('hidden');
-    UI.renderHome(state.pets);
+    UI.renderHome(
+      state.pets,
+      state.weights
+    );
   }
 
   function openPet(petId) {
@@ -146,7 +149,10 @@
     }
 
     closeDialog();
-    UI.renderHome(state.pets);
+    UI.renderHome(
+      state.pets,
+      state.weights
+    );
     openPet(pet.id);
     UI.showToast(`${pet.name} wurde angelegt.`);
   }
@@ -311,6 +317,11 @@
         return false;
       }
 
+      UI.updateCardWeight(
+        petId,
+        state.weights
+      );
+
       UI.showToast(
         `Gewicht für ${pet.name} auf ` +
         `${weightKg.toLocaleString(
@@ -344,6 +355,11 @@
 
       return false;
     }
+
+    UI.updateCardWeight(
+      petId,
+      state.weights
+    );
 
     UI.showToast(
       `${weightKg.toLocaleString(
