@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="color-scheme" content="dark" />
   <title>Pet Health</title>
-  <link rel="stylesheet" href="css/styles.css?v=1" />
+  <link rel="stylesheet" href="css/styles.css?v=2" />
 
   <script>
     window.PET_HEALTH_CACHE_BUST = Date.now().toString();
@@ -70,11 +70,56 @@
             <strong id="recordNeutered">–</strong>
           </div>
           <div class="record-field">
-            <span class="label">Ziel-/Warnzone</span>
-            <strong id="recordTargetWeight">Nicht gesetzt</strong>
+              <span class="label">Ziel-/Warnzone</span>
+              <strong id="recordTargetWeight">Nicht gesetzt</strong>
+            </div>
           </div>
-        </div>
-      </article>
+
+          <section class="record-section">
+            <div class="record-section-head">
+              <div>
+                <span class="section-kicker">Gewicht</span>
+                <h3>Aktueller Stand</h3>
+              </div>
+            </div>
+
+            <div class="record-weight-overview">
+              <div class="record-weight-main">
+                <strong id="recordCurrentWeight">
+                  Noch keine Messung
+                </strong>
+
+                <span
+                  id="recordWeightTrend"
+                  class="weight-trend hidden"
+                ></span>
+              </div>
+
+              <span
+                id="recordWeightDate"
+                class="record-weight-date"
+              >
+                Noch keine Messung
+              </span>
+            </div>
+          </section>
+
+          <section class="record-section">
+            <div class="record-section-head">
+              <div>
+                <span class="section-kicker">
+                  Verlauf
+                </span>
+                <h3>Gewichtsentwicklung</h3>
+              </div>
+            </div>
+
+            <div
+              id="recordWeightChart"
+              class="weight-chart"
+            ></div>
+          </section>
+        </article>
     </section>
   </main>
 
@@ -168,8 +213,7 @@
         </div>
 
         <p class="form-hint">
-          Für den ersten Schritt speichern wir nur die grundlegenden Stammdaten.
-          Gesundheit, Gewicht und weitere Bereiche kommen anschließend in die Tierakte.
+          Hier können die grundlegenden Stammdaten des Tiers ergänzt oder geändert werden.
         </p>
       </div>
 

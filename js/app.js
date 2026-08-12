@@ -48,7 +48,10 @@
     activePetId = petId;
     $('homeView').classList.add('hidden');
     $('petView').classList.remove('hidden');
-    UI.renderRecord(pet);
+    UI.renderRecord(
+      pet,
+      state.weights
+    );
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 

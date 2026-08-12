@@ -261,6 +261,122 @@ p { line-height: 1.45; }
 }
 .record-field .label { color: var(--muted); font-size: 0.82rem; }
 
+.record-section {
+  padding: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.record-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  margin-bottom: 14px;
+}
+
+.record-section-head h3 {
+  margin: 2px 0 0;
+  font-size: 1rem;
+}
+
+.section-kicker {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.record-weight-overview {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.record-weight-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#recordCurrentWeight {
+  font-size: 1.45rem;
+}
+
+.record-weight-date {
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+
+/*
+ * Gewichtsdiagramm
+ */
+
+.weight-chart {
+  width: 100%;
+  min-height: 180px;
+
+  padding: 8px;
+
+  border: 1px solid var(--line);
+  border-radius: 14px;
+
+  background: var(--panel-2);
+
+  overflow: hidden;
+}
+
+.weight-chart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.chart-grid-line {
+  stroke: var(--line);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.chart-grid-label,
+.chart-date-label {
+  fill: var(--muted);
+  font-size: 26px;
+}
+
+.chart-line {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 4;
+
+  stroke-linecap: round;
+  stroke-linejoin: round;
+
+  vector-effect: non-scaling-stroke;
+}
+
+.chart-point {
+  fill: var(--panel);
+  stroke: var(--accent);
+  stroke-width: 3;
+
+  vector-effect: non-scaling-stroke;
+}
+
+.chart-empty {
+  display: grid;
+  place-items: center;
+
+  min-height: 160px;
+  padding: 20px;
+
+  text-align: center;
+
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
 dialog {
   width: min(94vw, 650px);
   max-height: 92vh;

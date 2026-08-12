@@ -475,23 +475,435 @@
     return true;
   }
 
-  function renderRecord(pet) {
-    $('recordAvatar').textContent = speciesIcon(pet.species);
-    $('recordName').textContent = pet.name;
-    const age = calculateAge(pet.birthDate, pet.birthDateApproximate);
-    $('recordSummary').textContent = [pet.species, age !== 'Nicht angegeben' ? age : ''].filter(Boolean).join(' · ');
-    $('recordSpecies').textContent = pet.species || '–';
-    $('recordBreed').textContent = pet.breed || 'Nicht angegeben';
-    $('recordBirthDate').textContent = pet.birthDate
-      ? `${pet.birthDateApproximate ? 'ca. ' : ''}${formatDate(pet.birthDate)}`
-      : 'Nicht angegeben';
-    $('recordAge').textContent = age;
-    $('recordSex').textContent = sexLabel(pet.sex);
-    $('recordNeutered').textContent = neuteredLabel(pet.neutered);
+  function renderWeightChart(
+    petId,
+    weights = []
+  ) {
+    const container =
+      $('recordWeightChart');
+
+    if (!container) return;
+
+    const petWeights =
+      weights
+        .filter(
+          (weight) =>
+            weight.petId === petId &&
+            Number.isFinite(
+              Number(weight.weightKg)
+            )
+        )
+        .sort(
+          (a, b) =>
+            String(a.date).localeCompare(
+              String(b.date)
+            )
+        );
+
+    if (!petWeights.length) {
+      container.innerHTML = `
+        <div class="chart-empty">
+          Noch keine Gewichtsmessung vorhanden.
+        </div>
+      `;
+
+      return;
+    }
+
+    if (petWeights.length === 1) {
+      container.innerHTML = `
+        <div class="chart-empty">
+          Eine Messung vorhanden.
+          Der Verlauf wird ab der zweiten Messung sichtbar.
+        </div>
+      `;
+
+      return;
+    }
+
+
+    const width = 1000;
+    const height = 320;
+
+    const padding = {
+      top: 24,
+      right: 24,
+      bottom: 48,
+      left: 78
+    };
+
+    const values =
+      petWeights.map(
+        (weight) =>
+          Number(weight.weightKg)
+      );
+
+    let minWeight =
+      Math.min(...values);
+
+    let maxWeight =
+      Math.max(...values);
+
+    const spread =
+      maxWeight - minWeight;
+
+    /*
+    * Etwas Luft ober- und unterhalb
+    * der tatsächlichen Messwerte.
+    */
+    const weightPadding =
+      spread > 0
+        ? Math.max(
+            spread * 0.15,
+            0.01
+          )
+        : Math.max(
+            maxWeight * 0.02,
+            0.05
+          );
+
+    minWeight =
+      Math.max(
+        0,
+        minWeight - weightPadding
+      );
+
+    maxWeight +=
+      weightPadding;
+
+
+    const chartWidth =
+      width -
+      padding.left -
+      padding.right;
+
+    const chartHeight =
+      height -
+      padding.top -
+      padding.bottom;
+
+
+    function xFor(index) {
+      return (
+        padding.left +
+        (
+          index /
+          (petWeights.length - 1)
+        ) *
+        chartWidth
+      );
+    }
+
+
+    function yFor(weightKg) {
+      const range =
+        maxWeight - minWeight;
+
+      return (
+        padding.top +
+        (
+          1 -
+          (
+            weightKg -
+            minWeight
+          ) /
+          range
+        ) *
+        chartHeight
+      );
+    }
+
+
+    const points =
+      petWeights.map(
+        (weight, index) => ({
+          x: xFor(index),
+          y: yFor(
+            Number(weight.weightKg)
+          ),
+          weight
+        })
+      );
+
+
+    const path =
+      points
+        .map(
+          (point, index) =>
+            `${
+              index === 0
+                ? 'M'
+                : 'L'
+            } ${point.x.toFixed(2)} ${point.y.toFixed(2)}`
+        )
+        .join(' ');
+
+
+    /*
+    * Drei horizontale Orientierungslinien:
+    * oben, Mitte, unten.
+    */
+    const gridLines =
+      [0, 0.5, 1]
+        .map((position) => {
+          const y =
+            padding.top +
+            chartHeight *
+            position;
+
+          const weight =
+            maxWeight -
+            (
+              maxWeight -
+              minWeight
+            ) *
+            position;
+
+          const label =
+            weight.toLocaleString(
+              'de-DE',
+              {
+                minimumFractionDigits: 3,
+                maximumFractionDigits: 3
+              }
+            );
+
+          return `
+            <line
+              class="chart-grid-line"
+              x1="${padding.left}"
+              y1="${y}"
+              x2="${width - padding.right}"
+              y2="${y}"
+            />
+
+            <text
+              class="chart-grid-label"
+              x="${padding.left - 14}"
+              y="${y + 9}"
+              text-anchor="end"
+            >
+              ${label}
+            </text>
+          `;
+        })
+        .join('');
+
+
+    const circles =
+      points
+        .map((point) => {
+          const date =
+            formatDate(
+              point.weight.date
+            );
+
+          const weight =
+            formatKg(
+              point.weight.weightKg
+            );
+
+          return `
+            <circle
+              class="chart-point"
+              cx="${point.x}"
+              cy="${point.y}"
+              r="7"
+            >
+              <title>
+                ${escapeHtml(date)} · ${escapeHtml(weight)}
+              </title>
+            </circle>
+          `;
+        })
+        .join('');
+
+
+    const firstDate =
+      formatDate(
+        petWeights[0].date
+      );
+
+    const lastDate =
+      formatDate(
+        petWeights[
+          petWeights.length - 1
+        ].date
+      );
+
+
+    container.innerHTML = `
+      <svg
+        viewBox="0 0 ${width} ${height}"
+        role="img"
+        aria-label="Gewichtsverlauf"
+      >
+        ${gridLines}
+
+        <path
+          class="chart-line"
+          d="${path}"
+        />
+
+        ${circles}
+
+        <text
+          class="chart-date-label"
+          x="${padding.left}"
+          y="${height - 12}"
+          text-anchor="start"
+        >
+          ${escapeHtml(firstDate)}
+        </text>
+
+        <text
+          class="chart-date-label"
+          x="${width - padding.right}"
+          y="${height - 12}"
+          text-anchor="end"
+        >
+          ${escapeHtml(lastDate)}
+        </text>
+      </svg>
+    `;
+  }
+
+  function renderRecord(
+    pet,
+    weights = []
+  ) {
+    $('recordAvatar').textContent =
+      speciesIcon(pet.species);
+
+    $('recordName').textContent =
+      pet.name;
+
+    const age =
+      calculateAge(
+        pet.birthDate,
+        pet.birthDateApproximate
+      );
+
+    $('recordSummary').textContent =
+      [
+        pet.species,
+        age !== 'Nicht angegeben'
+          ? age
+          : ''
+      ]
+        .filter(Boolean)
+        .join(' · ');
+
+    $('recordSpecies').textContent =
+      pet.species || '–';
+
+    $('recordBreed').textContent =
+      pet.breed ||
+      'Nicht angegeben';
+
+    $('recordBirthDate').textContent =
+      pet.birthDate
+        ? `${
+            pet.birthDateApproximate
+              ? 'ca. '
+              : ''
+          }${formatDate(
+            pet.birthDate
+          )}`
+        : 'Nicht angegeben';
+
+    $('recordAge').textContent =
+      age;
+
+    $('recordSex').textContent =
+      sexLabel(pet.sex);
+
+    $('recordNeutered').textContent =
+      neuteredLabel(
+        pet.neutered
+      );
+
     $('recordTargetWeight').textContent =
-    targetWeightLabel(
-      pet.targetWeightMin,
-      pet.targetWeightMax
+      targetWeightLabel(
+        pet.targetWeightMin,
+        pet.targetWeightMax
+      );
+
+
+    /*
+    * Gewicht
+    */
+    const {
+      current,
+      trend
+    } = getWeightSummary(
+      pet.id,
+      weights
+    );
+
+    const weightElement =
+      $('recordCurrentWeight');
+
+    const trendElement =
+      $('recordWeightTrend');
+
+    const dateElement =
+      $('recordWeightDate');
+
+
+    if (!current) {
+      weightElement.textContent =
+        'Noch keine Messung';
+
+      dateElement.textContent =
+        'Noch keine Messung';
+
+      trendElement.textContent = '';
+
+      trendElement.classList.add(
+        'hidden'
+      );
+
+    } else {
+      weightElement.textContent =
+        formatKg(
+          current.weightKg
+        );
+
+      dateElement.textContent =
+        `Messung vom ${
+          formatDate(current.date)
+        }`;
+
+      if (trend) {
+        trendElement.textContent =
+          trend.symbol;
+
+        trendElement.title =
+          `Tendenz: ${trend.label}`;
+
+        trendElement.setAttribute(
+          'aria-label',
+          `Tendenz: ${trend.label}`
+        );
+
+        trendElement.classList.remove(
+          'hidden'
+        );
+
+      } else {
+        trendElement.textContent = '';
+
+        trendElement.classList.add(
+          'hidden'
+        );
+      }
+    }
+
+
+    renderWeightChart(
+      pet.id,
+      weights
     );
   }
 
