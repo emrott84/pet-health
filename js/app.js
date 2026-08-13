@@ -50,7 +50,8 @@
     $('petView').classList.remove('hidden');
     UI.renderRecord(
       pet,
-      state.weights
+      state.weights,
+      state.journalEntries
     );
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }

@@ -768,9 +768,142 @@
     `;
   }
 
+  function renderJournal(
+    petId,
+    journalEntries = []
+  ) {
+    const container =
+      $('recordJournal');
+
+    if (!container) return;
+
+
+    const entries =
+      journalEntries
+        .filter(
+          (entry) =>
+            entry.petId === petId &&
+            entry.text
+        )
+        .sort((a, b) => {
+          const aTime =
+            new Date(
+              a.createdAt ||
+              `${a.date}T00:00:00`
+            ).getTime();
+
+          const bTime =
+            new Date(
+              b.createdAt ||
+              `${b.date}T00:00:00`
+            ).getTime();
+
+          return bTime - aTime;
+        });
+
+
+    if (!entries.length) {
+      container.innerHTML = `
+        <div class="journal-empty">
+          Noch keine Bemerkungen vorhanden.
+        </div>
+      `;
+
+      return;
+    }
+
+
+    function entryHtml(entry) {
+      let time = '';
+
+      if (entry.createdAt) {
+        const created =
+          new Date(entry.createdAt);
+
+        if (
+          !Number.isNaN(
+            created.getTime()
+          )
+        ) {
+          time =
+            created.toLocaleTimeString(
+              'de-DE',
+              {
+                hour: '2-digit',
+                minute: '2-digit'
+              }
+            );
+        }
+      }
+
+      return `
+        <article class="journal-entry">
+          <div class="journal-entry-date">
+            <strong>
+              ${escapeHtml(
+                formatDate(entry.date)
+              )}
+            </strong>
+
+            ${
+              time
+                ? `
+                  <span>
+                    ${escapeHtml(time)} Uhr
+                  </span>
+                `
+                : ''
+            }
+          </div>
+
+          <p>
+            ${escapeHtml(entry.text)}
+          </p>
+        </article>
+      `;
+    }
+
+
+    const currentEntries =
+      entries.slice(0, 3);
+
+    const olderEntries =
+      entries.slice(3);
+
+
+    let html =
+      currentEntries
+        .map(entryHtml)
+        .join('');
+
+
+    if (olderEntries.length) {
+      html += `
+        <details class="journal-history">
+          <summary>
+            Ältere Bemerkungen anzeigen
+            (${olderEntries.length})
+          </summary>
+
+          <div class="journal-history-content">
+            ${
+              olderEntries
+                .map(entryHtml)
+                .join('')
+            }
+          </div>
+        </details>
+      `;
+    }
+
+
+    container.innerHTML = html;
+  }
+
   function renderRecord(
     pet,
-    weights = []
+    weights = [],
+    journalEntries = []
   ) {
     $('recordAvatar').textContent =
       speciesIcon(pet.species);
@@ -904,6 +1037,11 @@
     renderWeightChart(
       pet.id,
       weights
+    );
+
+    renderJournal(
+      pet.id,
+      journalEntries
     );
   }
 
