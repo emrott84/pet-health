@@ -13,6 +13,23 @@
     })[char]);
   }
 
+  function makeUiId(prefix = 'item') {
+    if (
+      globalThis.crypto &&
+      typeof crypto.randomUUID === 'function'
+    ) {
+      return crypto.randomUUID();
+    }
+
+    return (
+      `${prefix}-` +
+      `${Date.now().toString(36)}-` +
+      `${Math.random()
+        .toString(36)
+        .slice(2, 9)}`
+    );
+  }
+
   function speciesIcon(species = '') {
     const s = species.trim().toLowerCase();
     if (s.includes('katze') || s.includes('kater')) return '🐱';
@@ -900,6 +917,137 @@
     container.innerHTML = html;
   }
 
+  function renderHealthOverview(pet) {
+    const conditionContainer =
+      $('recordConditions');
+
+    const medicationContainer =
+      $('recordMedications');
+
+    if (
+      !conditionContainer ||
+      !medicationContainer
+    ) {
+      return;
+    }
+
+    function conditionHtml(item) {
+      return `
+        <div class="health-item">
+          <strong>
+            ${escapeHtml(item.name)}
+          </strong>
+
+          ${
+            item.note
+              ? `
+                <p>
+                  ${escapeHtml(item.note)}
+                </p>
+              `
+              : ''
+          }
+        </div>
+      `;
+    }
+
+    function medicationHtml(item) {
+      return `
+        <div class="health-item">
+          <div class="health-item-title">
+            <strong>
+              ${escapeHtml(item.name)}
+            </strong>
+
+            ${
+              item.dose
+                ? `
+                  <span class="health-dose">
+                    ${escapeHtml(item.dose)}
+                  </span>
+                `
+                : ''
+            }
+          </div>
+
+          ${
+            item.note
+              ? `
+                <p>
+                  ${escapeHtml(item.note)}
+                </p>
+              `
+              : ''
+          }
+        </div>
+      `;
+    }
+
+    function renderList(
+      items,
+      itemRenderer,
+      emptyText
+    ) {
+      const active =
+        items.filter(
+          (item) =>
+            item.active !== false
+        );
+
+      const inactive =
+        items.filter(
+          (item) =>
+            item.active === false
+        );
+
+      let html = active.length
+        ? active
+            .map(itemRenderer)
+            .join('')
+        : `
+            <div class="health-empty">
+              ${escapeHtml(emptyText)}
+            </div>
+          `;
+
+      if (inactive.length) {
+        html += `
+          <details class="health-history">
+            <summary>
+              Frühere Einträge
+              (${inactive.length})
+            </summary>
+
+            <div class="health-history-content">
+              ${
+                inactive
+                  .map(itemRenderer)
+                  .join('')
+              }
+            </div>
+          </details>
+        `;
+      }
+
+      return html;
+    }
+
+    conditionContainer.innerHTML =
+      renderList(
+        pet.conditions || [],
+        conditionHtml,
+        'Keine aktiven Krankheiten eingetragen.'
+      );
+
+
+    medicationContainer.innerHTML =
+      renderList(
+        pet.medications || [],
+        medicationHtml,
+        'Keine aktive Medikation eingetragen.'
+      );
+  }
+
   function renderRecord(
     pet,
     weights = [],
@@ -1039,10 +1187,229 @@
       weights
     );
 
+    renderHealthOverview(
+      pet
+    );
+
     renderJournal(
       pet.id,
       journalEntries
     );
+  }
+
+  function addConditionRow(
+    condition = null,
+    focus = true
+  ) {
+    const container =
+      $('conditionEditor');
+
+    if (!container) return;
+
+    const now =
+      new Date().toISOString();
+
+    const item = condition || {};
+
+    const id =
+      item.id ||
+      makeUiId('condition');
+
+    const createdAt =
+      item.createdAt || now;
+
+    container.insertAdjacentHTML(
+      'beforeend',
+      `
+        <div
+          class="health-editor-row"
+          data-condition-row
+          data-entry-id="${escapeHtml(id)}"
+          data-created-at="${escapeHtml(createdAt)}"
+        >
+          <div class="health-editor-row-head">
+            <strong>Krankheit / Diagnose</strong>
+
+            <button
+              class="health-remove-button"
+              type="button"
+              data-remove-health
+            >
+              Entfernen
+            </button>
+          </div>
+
+          <label>
+            Bezeichnung
+
+            <input
+              type="text"
+              maxlength="100"
+              required
+              placeholder="z. B. IBD"
+              value="${escapeHtml(item.name || '')}"
+              data-condition-name
+            />
+          </label>
+
+          <label>
+            Notiz
+
+            <textarea
+              rows="2"
+              maxlength="500"
+              placeholder="optional"
+              data-condition-note
+            >${escapeHtml(item.note || '')}</textarea>
+          </label>
+
+          <label class="checkbox-row health-active-row">
+            <input
+              type="checkbox"
+              data-condition-active
+              ${
+                item.active !== false
+                  ? 'checked'
+                  : ''
+              }
+            />
+
+            <span>Aktiv</span>
+          </label>
+        </div>
+      `
+    );
+
+    if (focus) {
+      const rows =
+        container.querySelectorAll(
+          '[data-condition-row]'
+        );
+
+      const row =
+        rows[rows.length - 1];
+
+      row
+        ?.querySelector(
+          '[data-condition-name]'
+        )
+        ?.focus();
+    }
+  }
+
+
+  function addMedicationRow(
+    medication = null,
+    focus = true
+  ) {
+    const container =
+      $('medicationEditor');
+
+    if (!container) return;
+
+    const now =
+      new Date().toISOString();
+
+    const item = medication || {};
+
+    const id =
+      item.id ||
+      makeUiId('medication');
+
+    const createdAt =
+      item.createdAt || now;
+
+    container.insertAdjacentHTML(
+      'beforeend',
+      `
+        <div
+          class="health-editor-row"
+          data-medication-row
+          data-entry-id="${escapeHtml(id)}"
+          data-created-at="${escapeHtml(createdAt)}"
+        >
+          <div class="health-editor-row-head">
+            <strong>Medikation</strong>
+
+            <button
+              class="health-remove-button"
+              type="button"
+              data-remove-health
+            >
+              Entfernen
+            </button>
+          </div>
+
+          <div class="form-grid two">
+            <label>
+              Medikament
+
+              <input
+                type="text"
+                maxlength="100"
+                required
+                placeholder="z. B. Prednisolon"
+                value="${escapeHtml(item.name || '')}"
+                data-medication-name
+              />
+            </label>
+
+            <label>
+              Dosis / Anwendung
+
+              <input
+                type="text"
+                maxlength="120"
+                placeholder="z. B. 2,5 mg täglich"
+                value="${escapeHtml(item.dose || '')}"
+                data-medication-dose
+              />
+            </label>
+          </div>
+
+          <label>
+            Notiz
+
+            <textarea
+              rows="2"
+              maxlength="500"
+              placeholder="optional"
+              data-medication-note
+            >${escapeHtml(item.note || '')}</textarea>
+          </label>
+
+          <label class="checkbox-row health-active-row">
+            <input
+              type="checkbox"
+              data-medication-active
+              ${
+                item.active !== false
+                  ? 'checked'
+                  : ''
+              }
+            />
+
+            <span>Aktiv</span>
+          </label>
+        </div>
+      `
+    );
+
+    if (focus) {
+      const rows =
+        container.querySelectorAll(
+          '[data-medication-row]'
+        );
+
+      const row =
+        rows[rows.length - 1];
+
+      row
+        ?.querySelector(
+          '[data-medication-name]'
+        )
+        ?.focus();
+    }
   }
 
   function fillPetForm(pet) {
@@ -1067,6 +1434,28 @@
       pet?.targetWeightMax != null
         ? pet.targetWeightMax
         : '';
+    $('conditionEditor').innerHTML = '';
+
+    (pet?.conditions || [])
+      .forEach(
+        (condition) =>
+          addConditionRow(
+            condition,
+            false
+          )
+      );
+
+
+    $('medicationEditor').innerHTML = '';
+
+    (pet?.medications || [])
+      .forEach(
+        (medication) =>
+          addMedicationRow(
+            medication,
+            false
+          )
+      );
   }
 
   function readPetForm() {
@@ -1087,6 +1476,103 @@
         ? null
         : Number(rawTargetMax);
 
+    const now =
+      new Date().toISOString();
+
+    const conditions = [
+      ...document.querySelectorAll(
+        '[data-condition-row]'
+      )
+    ]
+      .map((row) => ({
+        id:
+          row.dataset.entryId ||
+          makeUiId('condition'),
+
+        name:
+          row
+            .querySelector(
+              '[data-condition-name]'
+            )
+            .value
+            .trim(),
+
+        note:
+          row
+            .querySelector(
+              '[data-condition-note]'
+            )
+            .value
+            .trim(),
+
+        active:
+          row
+            .querySelector(
+              '[data-condition-active]'
+            )
+            .checked,
+
+        createdAt:
+          row.dataset.createdAt ||
+          now,
+
+        updatedAt: now
+      }))
+      .filter(
+        (item) => item.name
+      );
+
+    const medications = [
+      ...document.querySelectorAll(
+        '[data-medication-row]'
+      )
+    ]
+      .map((row) => ({
+        id:
+          row.dataset.entryId ||
+          makeUiId('medication'),
+
+        name:
+          row
+            .querySelector(
+              '[data-medication-name]'
+            )
+            .value
+            .trim(),
+
+        dose:
+          row
+            .querySelector(
+              '[data-medication-dose]'
+            )
+            .value
+            .trim(),
+
+        note:
+          row
+            .querySelector(
+              '[data-medication-note]'
+            )
+            .value
+            .trim(),
+
+        active:
+          row
+            .querySelector(
+              '[data-medication-active]'
+            )
+            .checked,
+
+        createdAt:
+          row.dataset.createdAt ||
+          now,
+
+        updatedAt: now
+      }))
+      .filter(
+        (item) => item.name
+      );
+
     return {
       name: $('petName').value.trim(),
       species: $('petSpecies').value.trim(),
@@ -1102,7 +1588,9 @@
             ? false
             : null,
       targetWeightMin,
-      targetWeightMax
+      targetWeightMax,
+      conditions,
+      medications
     };                    
   }
 
@@ -1121,6 +1609,8 @@
     readPetForm,
     toggleQuickEntry,
     updateCardWeight,
+    addConditionRow,
+    addMedicationRow,
     showToast
   };
 })();

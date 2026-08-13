@@ -562,3 +562,143 @@ input:focus, select:focus { border-color: var(--accent); }
 
   margin-top: 5px;
 }
+
+/*
+ * Krankheiten / Medikation
+ */
+
+.btn.small {
+  padding: 7px 10px;
+  font-size: 0.82rem;
+}
+
+.form-section {
+  padding-top: 15px;
+  border-top: 1px solid var(--line);
+}
+
+.form-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  margin-bottom: 11px;
+}
+
+.form-section-head h3 {
+  margin: 2px 0 0;
+  font-size: 1rem;
+}
+
+.health-editor {
+  display: grid;
+  gap: 11px;
+}
+
+.health-editor-row {
+  display: grid;
+  gap: 11px;
+
+  padding: 13px;
+
+  border: 1px solid var(--line);
+  border-radius: 13px;
+
+  background: var(--panel-2);
+}
+
+.health-editor-row-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.health-remove-button {
+  border: 0;
+  background: transparent;
+
+  color: var(--muted);
+
+  padding: 4px;
+
+  font-size: 0.8rem;
+}
+
+.health-remove-button:hover,
+.health-remove-button:focus-visible {
+  color: var(--text);
+  outline: none;
+}
+
+.health-active-row {
+  min-height: auto;
+}
+
+
+.health-list {
+  display: grid;
+  gap: 10px;
+}
+
+.health-item {
+  padding: 12px 13px;
+
+  border: 1px solid var(--line);
+  border-radius: 12px;
+
+  background: var(--panel-2);
+}
+
+.health-item-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.health-dose {
+  color: var(--accent);
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.health-item p {
+  margin: 6px 0 0;
+
+  color: var(--muted);
+
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.health-empty {
+  padding: 14px;
+
+  text-align: center;
+
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.health-history {
+  margin-top: 2px;
+}
+
+.health-history summary {
+  padding: 9px 2px;
+
+  color: var(--accent);
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+.health-history-content {
+  display: grid;
+  gap: 10px;
+
+  margin-top: 5px;
+}

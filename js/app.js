@@ -483,6 +483,41 @@
       handlePetSubmit
     );
 
+    $('addConditionBtn').addEventListener(
+      'click',
+      () => {
+        UI.addConditionRow();
+      }
+    );
+
+
+    $('addMedicationBtn').addEventListener(
+      'click',
+      () => {
+        UI.addMedicationRow();
+      }
+    );
+
+
+    $('petDialog').addEventListener(
+      'click',
+      (event) => {
+
+        const removeButton =
+          event.target.closest(
+            '[data-remove-health]'
+          );
+
+        if (!removeButton) return;
+
+        const row =
+          removeButton.closest(
+            '[data-condition-row], [data-medication-row]'
+          );
+
+        row?.remove();
+      }
+    );
 
     /*
     * Tierkarte:

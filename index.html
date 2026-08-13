@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="color-scheme" content="dark" />
   <title>Pet Health</title>
-  <link rel="stylesheet" href="css/styles.css?v=3" />
+  <link rel="stylesheet" href="css/styles.css?v=4" />
 
   <script>
     window.PET_HEALTH_CACHE_BUST = Date.now().toString();
@@ -124,6 +124,38 @@
             <div class="record-section-head">
               <div>
                 <span class="section-kicker">
+                  Gesundheit
+                </span>
+                <h3>Krankheiten / Diagnosen</h3>
+              </div>
+            </div>
+
+            <div
+              id="recordConditions"
+              class="health-list"
+            ></div>
+          </section>
+
+          <section class="record-section">
+            <div class="record-section-head">
+              <div>
+                <span class="section-kicker">
+                  Behandlung
+                </span>
+                <h3>Medikation</h3>
+              </div>
+            </div>
+
+            <div
+              id="recordMedications"
+              class="health-list"
+            ></div>
+          </section>
+
+          <section class="record-section">
+            <div class="record-section-head">
+              <div>
+                <span class="section-kicker">
                   Verlauf
                 </span>
 
@@ -227,6 +259,55 @@
             <input id="petBirthApprox" type="checkbox" />
             <span>Geburtsdatum ist geschätzt</span>
           </label>
+        </div>
+
+        <div class="form-section section-gap">
+          <div class="form-section-head">
+            <div>
+              <span class="section-kicker">
+                Gesundheit
+              </span>
+              <h3>Krankheiten / Diagnosen</h3>
+            </div>
+
+            <button
+              class="btn small"
+              id="addConditionBtn"
+              type="button"
+            >
+              + Eintrag
+            </button>
+          </div>
+
+          <div
+            id="conditionEditor"
+            class="health-editor"
+          ></div>
+        </div>
+
+
+        <div class="form-section section-gap">
+          <div class="form-section-head">
+            <div>
+              <span class="section-kicker">
+                Behandlung
+              </span>
+              <h3>Medikation</h3>
+            </div>
+
+            <button
+              class="btn small"
+              id="addMedicationBtn"
+              type="button"
+            >
+              + Eintrag
+            </button>
+          </div>
+
+          <div
+            id="medicationEditor"
+            class="health-editor"
+          ></div>
         </div>
 
         <p class="form-hint">
