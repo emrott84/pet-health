@@ -534,6 +534,110 @@ def save_weight(pet_id, date_value):
         201 if created else 200
     )
 
+@app.post("/api/pets/<pet_id>/journal")
+def create_journal_entry(pet_id):
+    data = request.get_json(silent=True) or {}
+
+
+    text = str(
+        data.get("text", "")
+    ).strip()
+
+    if not text:
+        return jsonify({
+            "error":
+                "Eine Bemerkung wird benötigt."
+        }), 400
+
+
+    date_value = str(
+        data.get("date", "")
+    ).strip()
+
+
+    try:
+        datetime.strptime(
+            date_value,
+            "%Y-%m-%d"
+        )
+
+    except ValueError:
+        return jsonify({
+            "error":
+                "Ungültiges Datum. Erwartet wird YYYY-MM-DD."
+        }), 400
+
+
+    journal_id = (
+        "journal_" +
+        uuid.uuid4().hex
+    )
+
+    now = now_iso()
+
+
+    with get_connection() as connection:
+
+        pet = connection.execute("""
+            SELECT id
+            FROM pets
+            WHERE id = ?
+        """, (
+            pet_id,
+        )).fetchone()
+
+
+        if not pet:
+            return jsonify({
+                "error":
+                    "Tier nicht gefunden."
+            }), 404
+
+
+        connection.execute("""
+            INSERT INTO journal_entries (
+                id,
+                pet_id,
+                date,
+                text,
+                created_at,
+                updated_at
+            )
+            VALUES (
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?
+            )
+        """, (
+            journal_id,
+            pet_id,
+            date_value,
+            text,
+            now,
+            now
+        ))
+
+
+        connection.commit()
+
+
+        row = connection.execute("""
+            SELECT *
+            FROM journal_entries
+            WHERE id = ?
+        """, (
+            journal_id,
+        )).fetchone()
+
+
+    return jsonify({
+        "journalEntry":
+            journal_to_dict(row)
+    }), 201
+
 
 @app.post("/api/pets")
 def create_pet():
