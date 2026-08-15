@@ -283,7 +283,7 @@
   }
 
 
-  function saveQuickWeight(
+  async function saveQuickWeight(
     petId,
     input
   ) {
@@ -301,10 +301,12 @@
       return false;
     }
 
+
     const rawValue =
       String(input.value)
         .trim()
         .replace(',', '.');
+
 
     /*
     * Leeres Feld bedeutet:
@@ -314,13 +316,12 @@
       return true;
     }
 
+
     const weightKg =
       Number(rawValue);
 
     if (
-      !Number.isFinite(
-        weightKg
-      ) ||
+      !Number.isFinite(weightKg) ||
       weightKg <= 0 ||
       weightKg > 5000
     ) {
@@ -333,95 +334,95 @@
       return false;
     }
 
-    const date = todayISO();
-    const now =
-      new Date().toISOString();
+
+    const date =
+      todayISO();
 
     const existing =
       getTodayWeight(petId);
 
-    if (existing) {
-      const previousWeight =
-        existing.weightKg;
 
-      const previousUpdatedAt =
-        existing.updatedAt;
+    try {
+      const savedWeight =
+        await Storage.saveWeightOnApi(
+          petId,
+          date,
+          weightKg,
+          ''
+        );
 
-      existing.weightKg =
-        weightKg;
 
-      existing.updatedAt =
-        now;
+      if (existing) {
+        const index =
+          state.weights.findIndex(
+            (item) =>
+              item.id === existing.id
+          );
 
-      if (!saveState()) {
-        existing.weightKg =
-          previousWeight;
+        if (index !== -1) {
+          state.weights[index] =
+            savedWeight;
+        }
 
-        existing.updatedAt =
-          previousUpdatedAt;
-
-        return false;
+      } else {
+        state.weights.push(
+          savedWeight
+        );
       }
+
 
       UI.updateCardWeight(
         petId,
         state.weights
       );
 
-      UI.showToast(
-        `Gewicht für ${pet.name} auf ` +
-        `${weightKg.toLocaleString(
-          'de-DE',
-          {
-            minimumFractionDigits: 3,
-            maximumFractionDigits: 3
-          }
-        )} kg aktualisiert.`
-      );
+
+      if (existing) {
+        UI.showToast(
+          `Gewicht für ${pet.name} auf ` +
+          `${weightKg.toLocaleString(
+            'de-DE',
+            {
+              minimumFractionDigits: 3,
+              maximumFractionDigits: 3
+            }
+          )} kg aktualisiert.`
+        );
+
+      } else {
+        UI.showToast(
+          `${weightKg.toLocaleString(
+            'de-DE',
+            {
+              minimumFractionDigits: 3,
+              maximumFractionDigits: 3
+            }
+          )} kg für ${pet.name} gespeichert.`
+        );
+      }
+
 
       return true;
-    }
 
-    const weight =
-      Storage.createWeight({
-        petId,
-        date,
-        weightKg,
-        note: ''
-      });
+    } catch (error) {
+      console.error(
+        'Gewicht konnte nicht gespeichert werden:',
+        error
+      );
 
-    state.weights.push(weight);
+      UI.showToast(
+        error.message ||
+        'Gewicht konnte nicht gespeichert werden.'
+      );
 
-    if (!saveState()) {
-      state.weights =
-        state.weights.filter(
-          (item) =>
-            item.id !== weight.id
-        );
+      input.focus();
 
       return false;
     }
-
-    UI.updateCardWeight(
-      petId,
-      state.weights
-    );
-
-    UI.showToast(
-      `${weightKg.toLocaleString(
-        'de-DE',
-        {
-          minimumFractionDigits: 3,
-          maximumFractionDigits: 3
-        }
-      )} kg für ${pet.name} gespeichert.`
-    );
-
-    return true;
   }
 
 
-  function saveQuickJournal(
+  async function saveQuickJournal(
     petId,
     input
   ) {
@@ -439,8 +440,10 @@
       return false;
     }
 
+
     const text =
       input.value.trim();
+
 
     /*
     * Leere Bemerkung:
@@ -455,38 +458,50 @@
       return true;
     }
 
-    const entry =
-      Storage.createJournalEntry({
-        petId,
-        date: todayISO(),
-        text
-      });
 
-    state.journalEntries.push(
-      entry
-    );
-
-    if (!saveState()) {
-      state.journalEntries =
-        state.journalEntries.filter(
-          (item) =>
-            item.id !== entry.id
+    try {
+      const entry =
+        await Storage.createJournalOnApi(
+          petId,
+          todayISO(),
+          text
         );
+
+
+      state.journalEntries.push(
+        entry
+      );
+
+
+      input.value = '';
+
+      UI.toggleQuickEntry(
+        petId
+      );
+
+
+      UI.showToast(
+        `Bemerkung für ${pet.name} gespeichert.`
+      );
+
+
+      return true;
+
+    } catch (error) {
+      console.error(
+        'Bemerkung konnte nicht gespeichert werden:',
+        error
+      );
+
+      UI.showToast(
+        error.message ||
+        'Bemerkung konnte nicht gespeichert werden.'
+      );
+
+      input.focus();
 
       return false;
     }
-
-    input.value = '';
-
-    UI.toggleQuickEntry(
-      petId
-    );
-
-    UI.showToast(
-      `Bemerkung für ${pet.name} gespeichert.`
-    );
-
-    return true;
   }
 
   function bindEvents() {
@@ -616,7 +631,7 @@
     */
     $('petGrid').addEventListener(
       'keydown',
-      (event) => {
+      async (event) => {
 
         const weightInput =
           event.target.closest(
@@ -636,7 +651,7 @@
             weightInput.dataset.quickWeight;
 
           const saved =
-            saveQuickWeight(
+            await saveQuickWeight(
               petId,
               weightInput
             );
@@ -663,7 +678,7 @@
         ) {
           event.preventDefault();
 
-          saveQuickJournal(
+          await saveQuickJournal(
             journalInput.dataset.quickJournal,
             journalInput
           );

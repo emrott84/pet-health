@@ -506,6 +506,75 @@
     );
   }
 
+  async function saveWeightOnApi(
+    petId,
+    date,
+    weightKg,
+    note = ''
+  ) {
+    const response = await fetch(
+      `/api/pets/${encodeURIComponent(petId)}/weights/${encodeURIComponent(date)}`,
+      {
+        method: 'PUT',
+
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json'
+        },
+
+        body: JSON.stringify({
+          weightKg,
+          note
+        })
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        result.error ||
+        `Gewicht konnte nicht gespeichert werden (${response.status}).`
+      );
+    }
+
+    return result.weight;
+  }
+
+  async function createJournalOnApi(
+    petId,
+    date,
+    text
+  ) {
+    const response = await fetch(
+      `/api/pets/${encodeURIComponent(petId)}/journal`,
+      {
+        method: 'POST',
+
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json'
+        },
+
+        body: JSON.stringify({
+          date,
+          text
+        })
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        result.error ||
+        `Bemerkung konnte nicht gespeichert werden (${response.status}).`
+      );
+    }
+
+    return result.journalEntry;
+  }
+
   function save(state) {
     state.app = APP_ID;
     state.version = VERSION;
@@ -660,6 +729,8 @@
     loadFromApi,
     createPetOnApi,
     updatePetOnApi,
+    saveWeightOnApi,
+    createJournalOnApi,
     save,
     createPet,
     createWeight,
