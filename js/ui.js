@@ -902,9 +902,12 @@
 
           </div>
 
-          <p data-journal-text>
+          <div
+            class="journal-entry-text"
+            data-journal-text
+          >
             ${escapeHtml(entry.text)}
-          </p>
+          </div>
         </article>
       `;
     }

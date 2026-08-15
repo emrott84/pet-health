@@ -527,8 +527,10 @@ input:focus, select:focus { border-color: var(--accent); }
   font-size: 0.78rem;
 }
 
-.journal-entry p {
+.journal-entry-text {
   margin: 0;
+
+  line-height: 1.45;
 
   white-space: pre-wrap;
   overflow-wrap: anywhere;
