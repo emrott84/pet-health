@@ -5,7 +5,7 @@
   const Storage = window.PetHealthStorage;
   const UI = window.PetHealthUI;
 
-  let state = Storage.load();
+  let state = null;
   let activePetId = null;
   let editingPetId = null;
 
@@ -657,10 +657,30 @@
     );
   }
 
-  function init() {
-    bindEvents();
-    showHome();
+  async function init() {
+    try {
+      state = await Storage.loadFromApi();
+
+      bindEvents();
+      showHome();
+
+      console.info(
+        'Pet Health: State aus API geladen.'
+      );
+
+    } catch (error) {
+      console.error(
+        'Pet Health konnte den Server-State nicht laden:',
+        error
+      );
+
+      UI.showToast(
+        'Daten konnten nicht vom Server geladen werden.'
+      );
+    }
   }
+
+  init();
 
   init();
 })();

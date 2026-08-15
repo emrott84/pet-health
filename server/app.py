@@ -3,13 +3,20 @@ from pathlib import Path
 import sqlite3
 import uuid
 
-from flask import Flask, jsonify, request
+from flask import (
+    Flask,
+    jsonify,
+    request,
+    send_from_directory
+)
 
 
 app = Flask(__name__)
 
 
 BASE_DIR = Path(__file__).resolve().parent
+PROJECT_DIR = BASE_DIR.parent
+
 DATA_DIR = BASE_DIR / "data"
 DB_PATH = DATA_DIR / "pethealth.db"
 
@@ -268,6 +275,55 @@ def medication_to_dict(row):
         "createdAt": row["created_at"],
         "updatedAt": row["updated_at"]
     }
+
+def load_pet_with_health(connection, pet_id):
+    pet_row = connection.execute("""
+        SELECT *
+        FROM pets
+        WHERE id = ?
+    """, (
+        pet_id,
+    )).fetchone()
+
+    if not pet_row:
+        return None
+
+
+    pet = pet_to_dict(pet_row)
+
+
+    condition_rows = connection.execute("""
+        SELECT *
+        FROM conditions
+        WHERE pet_id = ?
+        ORDER BY created_at
+    """, (
+        pet_id,
+    )).fetchall()
+
+
+    medication_rows = connection.execute("""
+        SELECT *
+        FROM medications
+        WHERE pet_id = ?
+        ORDER BY created_at
+    """, (
+        pet_id,
+    )).fetchall()
+
+
+    pet["conditions"] = [
+        condition_to_dict(row)
+        for row in condition_rows
+    ]
+
+    pet["medications"] = [
+        medication_to_dict(row)
+        for row in medication_rows
+    ]
+
+
+    return pet
 
 @app.get("/api/state")
 def get_state():
@@ -651,28 +707,38 @@ def create_pet():
         data.get("species", "")
     ).strip()
 
-
     if not name or not species:
         return jsonify({
-            "error":
-                "Name und Tierart werden benötigt."
+            "error": "Name und Tierart werden benötigt."
         }), 400
 
 
-    pet_id = "pet_" + uuid.uuid4().hex
+    conditions = data.get(
+        "conditions",
+        []
+    )
 
-    now = now_iso()
+    medications = data.get(
+        "medications",
+        []
+    )
+
+    if not isinstance(conditions, list):
+        return jsonify({
+            "error":
+                "Krankheiten müssen als Liste übergeben werden."
+        }), 400
+
+    if not isinstance(medications, list):
+        return jsonify({
+            "error":
+                "Medikamente müssen als Liste übergeben werden."
+        }), 400
 
 
-    birth_date = data.get("birthDate") or None
-
-    birth_approximate = 1 if data.get(
-            "birthDateApproximate",
-            False
-        ) else 0
-
-
-    neutered_value = data.get("neutered")
+    neutered_value = data.get(
+        "neutered"
+    )
 
     if neutered_value is True:
         neutered = 1
@@ -684,9 +750,75 @@ def create_pet():
         neutered = None
 
 
-    target_min = data.get("targetWeightMin")
+    target_min = data.get(
+        "targetWeightMin"
+    )
 
-    target_max = data.get("targetWeightMax")
+    target_max = data.get(
+        "targetWeightMax"
+    )
+
+    try:
+        if target_min is not None:
+            target_min = float(
+                target_min
+            )
+
+        if target_max is not None:
+            target_max = float(
+                target_max
+            )
+
+    except (TypeError, ValueError):
+        return jsonify({
+            "error":
+                "Ungültige Ziel-/Warnzone."
+        }), 400
+
+
+    if (
+        target_min is not None and
+        (
+            target_min <= 0 or
+            target_min > 5000
+        )
+    ):
+        return jsonify({
+            "error":
+                "Ungültige Untergrenze."
+        }), 400
+
+
+    if (
+        target_max is not None and
+        (
+            target_max <= 0 or
+            target_max > 5000
+        )
+    ):
+        return jsonify({
+            "error":
+                "Ungültige Obergrenze."
+        }), 400
+
+
+    if (
+        target_min is not None and
+        target_max is not None and
+        target_min > target_max
+    ):
+        return jsonify({
+            "error":
+                "Die Untergrenze darf nicht über der Obergrenze liegen."
+        }), 400
+
+
+    pet_id = (
+        "pet_" +
+        uuid.uuid4().hex
+    )
+
+    now = now_iso()
 
 
     with get_connection() as connection:
@@ -730,9 +862,16 @@ def create_pet():
                     ""
                 )
             ).strip(),
-            birth_date,
-            birth_approximate,
-            data.get("sex") or None,
+            data.get(
+                "birthDate"
+            ) or None,
+            1 if data.get(
+                "birthDateApproximate",
+                False
+            ) else 0,
+            data.get(
+                "sex"
+            ) or None,
             neutered,
             target_min,
             target_max,
@@ -740,10 +879,298 @@ def create_pet():
             now
         ))
 
+
+        for item in conditions:
+            if not isinstance(
+                item,
+                dict
+            ):
+                continue
+
+            condition_name = str(
+                item.get(
+                    "name",
+                    ""
+                )
+            ).strip()
+
+            if not condition_name:
+                continue
+
+            condition_id = str(
+                item.get("id") or
+                (
+                    "condition_" +
+                    uuid.uuid4().hex
+                )
+            )
+
+            created_at = str(
+                item.get(
+                    "createdAt",
+                    now
+                )
+            )
+
+            connection.execute("""
+                INSERT INTO conditions (
+                    id,
+                    pet_id,
+                    name,
+                    note,
+                    active,
+                    created_at,
+                    updated_at
+                )
+                VALUES (
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?
+                )
+            """, (
+                condition_id,
+                pet_id,
+                condition_name,
+                str(
+                    item.get(
+                        "note",
+                        ""
+                    )
+                ).strip(),
+                1 if item.get(
+                    "active",
+                    True
+                ) else 0,
+                created_at,
+                now
+            ))
+
+
+        for item in medications:
+            if not isinstance(
+                item,
+                dict
+            ):
+                continue
+
+            medication_name = str(
+                item.get(
+                    "name",
+                    ""
+                )
+            ).strip()
+
+            if not medication_name:
+                continue
+
+            medication_id = str(
+                item.get("id") or
+                (
+                    "medication_" +
+                    uuid.uuid4().hex
+                )
+            )
+
+            created_at = str(
+                item.get(
+                    "createdAt",
+                    now
+                )
+            )
+
+            connection.execute("""
+                INSERT INTO medications (
+                    id,
+                    pet_id,
+                    name,
+                    dose,
+                    note,
+                    active,
+                    created_at,
+                    updated_at
+                )
+                VALUES (
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?
+                )
+            """, (
+                medication_id,
+                pet_id,
+                medication_name,
+                str(
+                    item.get(
+                        "dose",
+                        ""
+                    )
+                ).strip(),
+                str(
+                    item.get(
+                        "note",
+                        ""
+                    )
+                ).strip(),
+                1 if item.get(
+                    "active",
+                    True
+                ) else 0,
+                created_at,
+                now
+            ))
+
+
         connection.commit()
 
-        row = connection.execute("""
-            SELECT *
+        pet = load_pet_with_health(
+            connection,
+            pet_id
+        )
+
+
+    return jsonify({
+        "pet": pet
+    }), 201
+
+@app.put("/api/pets/<pet_id>")
+def update_pet(pet_id):
+    data = request.get_json(silent=True) or {}
+
+
+    name = str(
+        data.get("name", "")
+    ).strip()
+
+    species = str(
+        data.get("species", "")
+    ).strip()
+
+
+    if not name or not species:
+        return jsonify({
+            "error":
+                "Name und Tierart werden benötigt."
+        }), 400
+
+
+    conditions = data.get(
+        "conditions",
+        []
+    )
+
+    medications = data.get(
+        "medications",
+        []
+    )
+
+
+    if not isinstance(conditions, list):
+        return jsonify({
+            "error":
+                "Krankheiten müssen als Liste übergeben werden."
+        }), 400
+
+
+    if not isinstance(medications, list):
+        return jsonify({
+            "error":
+                "Medikamente müssen als Liste übergeben werden."
+        }), 400
+
+
+    neutered_value = data.get(
+        "neutered"
+    )
+
+    if neutered_value is True:
+        neutered = 1
+
+    elif neutered_value is False:
+        neutered = 0
+
+    else:
+        neutered = None
+
+
+    target_min = data.get(
+        "targetWeightMin"
+    )
+
+    target_max = data.get(
+        "targetWeightMax"
+    )
+
+
+    try:
+        if target_min is not None:
+            target_min = float(
+                target_min
+            )
+
+        if target_max is not None:
+            target_max = float(
+                target_max
+            )
+
+    except (TypeError, ValueError):
+        return jsonify({
+            "error":
+                "Ungültige Ziel-/Warnzone."
+        }), 400
+
+
+    if (
+        target_min is not None and
+        (
+            target_min <= 0 or
+            target_min > 5000
+        )
+    ):
+        return jsonify({
+            "error":
+                "Ungültige Untergrenze."
+        }), 400
+
+
+    if (
+        target_max is not None and
+        (
+            target_max <= 0 or
+            target_max > 5000
+        )
+    ):
+        return jsonify({
+            "error":
+                "Ungültige Obergrenze."
+        }), 400
+
+
+    if (
+        target_min is not None and
+        target_max is not None and
+        target_min > target_max
+    ):
+        return jsonify({
+            "error":
+                "Die Untergrenze darf nicht über der Obergrenze liegen."
+        }), 400
+
+
+    now = now_iso()
+
+
+    with get_connection() as connection:
+
+        existing = connection.execute("""
+            SELECT id
             FROM pets
             WHERE id = ?
         """, (
@@ -751,9 +1178,239 @@ def create_pet():
         )).fetchone()
 
 
-    return jsonify(
-        pet_to_dict(row)
-    ), 201
+        if not existing:
+            return jsonify({
+                "error":
+                    "Tier nicht gefunden."
+            }), 404
+
+
+        connection.execute("""
+            UPDATE pets
+            SET
+                name = ?,
+                species = ?,
+                breed = ?,
+                birth_date = ?,
+                birth_date_approximate = ?,
+                sex = ?,
+                neutered = ?,
+                target_weight_min = ?,
+                target_weight_max = ?,
+                updated_at = ?
+            WHERE id = ?
+        """, (
+            name,
+            species,
+            str(
+                data.get(
+                    "breed",
+                    ""
+                )
+            ).strip(),
+            data.get(
+                "birthDate"
+            ) or None,
+            1 if data.get(
+                "birthDateApproximate",
+                False
+            ) else 0,
+            data.get(
+                "sex"
+            ) or None,
+            neutered,
+            target_min,
+            target_max,
+            now,
+            pet_id
+        ))
+
+        connection.execute("""
+            DELETE FROM conditions
+            WHERE pet_id = ?
+        """, (
+            pet_id,
+        ))
+
+
+        for item in conditions:
+            if not isinstance(
+                item,
+                dict
+            ):
+                continue
+
+
+            condition_name = str(
+                item.get(
+                    "name",
+                    ""
+                )
+            ).strip()
+
+
+            if not condition_name:
+                continue
+
+
+            condition_id = str(
+                item.get("id") or
+                (
+                    "condition_" +
+                    uuid.uuid4().hex
+                )
+            )
+
+
+            created_at = str(
+                item.get(
+                    "createdAt",
+                    now
+                )
+            )
+
+
+            connection.execute("""
+                INSERT INTO conditions (
+                    id,
+                    pet_id,
+                    name,
+                    note,
+                    active,
+                    created_at,
+                    updated_at
+                )
+                VALUES (
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?
+                )
+            """, (
+                condition_id,
+                pet_id,
+                condition_name,
+                str(
+                    item.get(
+                        "note",
+                        ""
+                    )
+                ).strip(),
+                1 if item.get(
+                    "active",
+                    True
+                ) else 0,
+                created_at,
+                now
+            ))
+
+
+        connection.execute("""
+            DELETE FROM medications
+            WHERE pet_id = ?
+        """, (
+            pet_id,
+        ))
+
+
+        for item in medications:
+            if not isinstance(
+                item,
+                dict
+            ):
+                continue
+
+
+            medication_name = str(
+                item.get(
+                    "name",
+                    ""
+                )
+            ).strip()
+
+
+            if not medication_name:
+                continue
+
+
+            medication_id = str(
+                item.get("id") or
+                (
+                    "medication_" +
+                    uuid.uuid4().hex
+                )
+            )
+
+
+            created_at = str(
+                item.get(
+                    "createdAt",
+                    now
+                )
+            )
+
+
+            connection.execute("""
+                INSERT INTO medications (
+                    id,
+                    pet_id,
+                    name,
+                    dose,
+                    note,
+                    active,
+                    created_at,
+                    updated_at
+                )
+                VALUES (
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?
+                )
+            """, (
+                medication_id,
+                pet_id,
+                medication_name,
+                str(
+                    item.get(
+                        "dose",
+                        ""
+                    )
+                ).strip(),
+                str(
+                    item.get(
+                        "note",
+                        ""
+                    )
+                ).strip(),
+                1 if item.get(
+                    "active",
+                    True
+                ) else 0,
+                created_at,
+                now
+            ))
+
+
+        connection.commit()
+
+
+        pet = load_pet_with_health(
+            connection,
+            pet_id
+        )
+
+
+    return jsonify({
+        "pet": pet
+    })
 
 
 @app.get("/api/health")
@@ -788,6 +1445,21 @@ def health():
             for row in tables
         ]
     })
+
+@app.get("/")
+def frontend_index():
+    return send_from_directory(
+        PROJECT_DIR,
+        "index.html"
+    )
+
+
+@app.get("/<path:path>")
+def frontend_file(path):
+    return send_from_directory(
+        PROJECT_DIR,
+        path
+    )
 
 
 if __name__ == "__main__":

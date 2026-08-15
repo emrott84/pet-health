@@ -414,6 +414,36 @@
     };
   }
 
+  async function loadFromApi() {
+    const response = await fetch(
+      '/api/state',
+      {
+        headers: {
+          Accept: 'application/json'
+        },
+        cache: 'no-store'
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(
+        `API-State konnte nicht geladen werden (${response.status}).`
+      );
+    }
+
+    const parsed = await response.json();
+
+    if (!validateV3State(parsed)) {
+      throw new Error(
+        'Ungültiger Pet-Health-State von der API.'
+      );
+    }
+
+    return normalizeCurrentState(
+      parsed
+    );
+  }
+
   function save(state) {
     state.app = APP_ID;
     state.version = VERSION;
@@ -565,6 +595,7 @@
 
   window.PetHealthStorage = {
     load,
+    loadFromApi,
     save,
     createPet,
     createWeight,
