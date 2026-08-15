@@ -903,11 +903,7 @@
           </div>
 
           <div
-            class="journal-entry-text"
-            data-journal-text
-          >
-            ${escapeHtml(entry.text)}
-          </div>
+            class="journal-entry-text" data-journal-text > ${escapeHtml(entry.text)} </div>
         </article>
       `;
     }

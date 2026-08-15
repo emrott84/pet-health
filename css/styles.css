@@ -497,43 +497,115 @@ input:focus, select:focus { border-color: var(--accent); }
 
 .record-journal {
   display: grid;
-  gap: 10px;
+  gap: 0;
 }
+
 
 .journal-entry {
-  padding: 12px 13px;
+  padding: 8px 4px;
 
-  border: 1px solid var(--line);
-  border-radius: 12px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
 
-  background: var(--panel-2);
+  background: transparent;
 }
+
+
+.journal-entry:last-child {
+  border-bottom: 0;
+}
+
+
+.journal-entry-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+
+  margin-bottom: 2px;
+}
+
 
 .journal-entry-date {
   display: flex;
   align-items: baseline;
-  gap: 8px;
+  gap: 7px;
   flex-wrap: wrap;
 
-  margin-bottom: 5px;
+  margin: 0;
 }
 
+
 .journal-entry-date strong {
-  font-size: 0.85rem;
+  font-size: 0.78rem;
+  font-weight: 700;
 }
+
 
 .journal-entry-date span {
   color: var(--muted);
-  font-size: 0.78rem;
+  font-size: 0.72rem;
 }
+
 
 .journal-entry-text {
   margin: 0;
 
-  line-height: 1.45;
+  line-height: 1.3;
+  font-size: 0.9rem;
 
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+}
+
+
+.journal-entry-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+
+  flex: 0 0 auto;
+}
+
+
+.journal-action-button {
+  width: 26px;
+  height: 26px;
+
+  display: grid;
+  place-items: center;
+
+  padding: 0;
+
+  border: 0;
+  border-radius: 7px;
+
+  background: transparent;
+  color: var(--muted);
+}
+
+
+.journal-action-button:hover,
+.journal-action-button:focus-visible {
+  background: var(--accent-soft);
+  color: var(--accent);
+
+  outline: none;
+}
+
+
+.journal-action-button svg {
+  width: 15px;
+  height: 15px;
+
+  display: block;
+
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .journal-empty {
@@ -631,10 +703,10 @@ input:focus, select:focus { border-color: var(--accent); }
 
 
 .journal-entry textarea {
-  min-height: 92px;
+  min-height: 72px;
 
   resize: vertical;
-  line-height: 1.45;
+  line-height: 1.4;
 }
 
 
@@ -646,9 +718,9 @@ input:focus, select:focus { border-color: var(--accent); }
 .journal-edit-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
+  gap: 7px;
 
-  margin-top: 9px;
+  margin-top: 7px;
 }
 
 /*

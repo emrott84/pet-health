@@ -779,6 +779,51 @@ def update_journal_entry(
             journal_to_dict(row)
     })
 
+@app.delete("/api/pets/<pet_id>/journal/<journal_id>")
+def delete_journal_entry(
+    pet_id,
+    journal_id
+):
+    with get_connection() as connection:
+
+        existing = connection.execute("""
+            SELECT id
+            FROM journal_entries
+            WHERE
+                id = ?
+                AND pet_id = ?
+        """, (
+            journal_id,
+            pet_id
+        )).fetchone()
+
+
+        if not existing:
+            return jsonify({
+                "error":
+                    "Bemerkung nicht gefunden."
+            }), 404
+
+
+        connection.execute("""
+            DELETE FROM journal_entries
+            WHERE
+                id = ?
+                AND pet_id = ?
+        """, (
+            journal_id,
+            pet_id
+        ))
+
+
+        connection.commit()
+
+
+    return jsonify({
+        "deleted": True,
+        "journalId": journal_id
+    })
+
 
 @app.post("/api/pets")
 def create_pet():
