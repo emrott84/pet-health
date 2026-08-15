@@ -500,11 +500,47 @@
     return result.journalEntry;
   }
 
+  async function updateJournalOnApi(
+    petId,
+    journalId,
+    text
+  ) {
+    const response = await fetch(
+      `/api/pets/${encodeURIComponent(petId)}/journal/${encodeURIComponent(journalId)}`,
+      {
+        method: 'PUT',
+
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json'
+        },
+
+        body: JSON.stringify({
+          text
+        })
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        result.error ||
+        `Bemerkung konnte nicht aktualisiert werden (${response.status}).`
+      );
+    }
+
+    return normalizeJournalEntry(
+      result.journalEntry
+    );
+  }
+
   window.PetHealthStorage = {
     loadFromApi,
     createPetOnApi,
     updatePetOnApi,
     saveWeightOnApi,
     createJournalOnApi,
+    updateJournalOnApi
   };
 })();

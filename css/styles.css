@@ -563,6 +563,92 @@ input:focus, select:focus { border-color: var(--accent); }
   margin-top: 5px;
 }
 
+.journal-entry-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+
+  margin-bottom: 7px;
+}
+
+
+.journal-entry-head .journal-entry-date {
+  margin-bottom: 0;
+  min-width: 0;
+}
+
+
+.journal-entry-actions {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+
+  flex: 0 0 auto;
+}
+
+
+.journal-action-button {
+  width: 30px;
+  height: 30px;
+
+  display: grid;
+  place-items: center;
+
+  padding: 0;
+
+  border: 0;
+  border-radius: 8px;
+
+  background: transparent;
+  color: var(--muted);
+}
+
+
+.journal-action-button:hover,
+.journal-action-button:focus-visible {
+  background: var(--accent-soft);
+  color: var(--accent);
+
+  outline: none;
+}
+
+
+.journal-action-button svg {
+  width: 17px;
+  height: 17px;
+
+  display: block;
+
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+
+.journal-entry textarea {
+  min-height: 92px;
+
+  resize: vertical;
+  line-height: 1.45;
+}
+
+
+.journal-entry textarea:focus {
+  border-color: var(--accent);
+}
+
+
+.journal-edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+
+  margin-top: 9px;
+}
+
 /*
  * Krankheiten / Medikation
  */

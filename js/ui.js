@@ -854,26 +854,55 @@
       }
 
       return `
-        <article class="journal-entry">
-          <div class="journal-entry-date">
-            <strong>
-              ${escapeHtml(
-                formatDate(entry.date)
-              )}
-            </strong>
+        <article
+          class="journal-entry"
+          data-journal-entry="${escapeHtml(entry.id)}"
+        >
+          <div class="journal-entry-head">
 
-            ${
-              time
-                ? `
-                  <span>
-                    ${escapeHtml(time)} Uhr
-                  </span>
-                `
-                : ''
-            }
+            <div class="journal-entry-date">
+              <strong>
+                ${escapeHtml(
+                  formatDate(entry.date)
+                )}
+              </strong>
+
+              ${
+                time
+                  ? `
+                      <span>
+                        ${escapeHtml(time)} Uhr
+                      </span>
+                    `
+                  : ''
+              }
+            </div>
+
+            <div class="journal-entry-actions">
+              <button
+                type="button"
+                class="journal-action-button"
+                data-edit-journal="${escapeHtml(entry.id)}"
+                title="Bemerkung bearbeiten"
+                aria-label="Bemerkung bearbeiten"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M14 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"
+                  />
+                  <path
+                    d="M13.5 14.5 19 9a2.12 2.12 0 0 0-3-3l-5.5 5.5-.5 3.5 3.5-.5Z"
+                  />
+                </svg>
+              </button>
+            </div>
+
           </div>
 
-          <p>
+          <p data-journal-text>
             ${escapeHtml(entry.text)}
           </p>
         </article>
@@ -915,6 +944,84 @@
 
 
     container.innerHTML = html;
+  }
+
+  function startJournalEdit(
+    journalId,
+    text
+  ) {
+    const entry =
+      document.querySelector(
+        `[data-journal-entry="${journalId}"]`
+      );
+
+    if (!entry) return false;
+
+
+    const textElement =
+      entry.querySelector(
+        '[data-journal-text]'
+      );
+
+    if (!textElement) return false;
+
+
+    textElement.innerHTML = `
+      <textarea
+        rows="4"
+        maxlength="2000"
+        data-journal-edit-input
+      >${escapeHtml(text)}</textarea>
+
+      <div class="journal-edit-actions">
+        <button
+          type="button"
+          class="btn small"
+          data-cancel-journal-edit="${escapeHtml(journalId)}"
+        >
+          Abbrechen
+        </button>
+
+        <button
+          type="button"
+          class="btn small primary"
+          data-save-journal-edit="${escapeHtml(journalId)}"
+        >
+          Speichern
+        </button>
+      </div>
+    `;
+
+
+    const input =
+      textElement.querySelector(
+        '[data-journal-edit-input]'
+      );
+
+    input?.focus();
+
+    return true;
+  }
+
+
+  function cancelJournalEdit(
+    journalId,
+    text
+  ) {
+    const entry =
+      document.querySelector(
+        `[data-journal-entry="${journalId}"]`
+      );
+
+    const textElement =
+      entry?.querySelector(
+        '[data-journal-text]'
+      );
+
+    if (!textElement) return;
+
+    textElement.textContent =
+      text;
   }
 
   function renderHealthOverview(pet) {
@@ -1611,6 +1718,8 @@
     updateCardWeight,
     addConditionRow,
     addMedicationRow,
+    startJournalEdit,
+    cancelJournalEdit,
     showToast
   };
 })();

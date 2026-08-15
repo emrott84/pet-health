@@ -614,6 +614,165 @@
       }
     );
 
+    $('recordJournal').addEventListener(
+      'click',
+      async (event) => {
+
+        const editButton =
+          event.target.closest(
+            '[data-edit-journal]'
+          );
+
+
+        if (editButton) {
+          const journalId =
+            editButton.dataset.editJournal;
+
+          const entry =
+            state.journalEntries.find(
+              (item) =>
+                item.id === journalId
+            );
+
+          if (!entry) return;
+
+          UI.startJournalEdit(
+            journalId,
+            entry.text
+          );
+
+          return;
+        }
+
+
+        const cancelButton =
+          event.target.closest(
+            '[data-cancel-journal-edit]'
+          );
+
+
+        if (cancelButton) {
+          const journalId =
+            cancelButton.dataset.cancelJournalEdit;
+
+          const entry =
+            state.journalEntries.find(
+              (item) =>
+                item.id === journalId
+            );
+
+          if (!entry) return;
+
+          UI.cancelJournalEdit(
+            journalId,
+            entry.text
+          );
+
+          return;
+        }
+
+
+        const saveButton =
+          event.target.closest(
+            '[data-save-journal-edit]'
+          );
+
+
+        if (saveButton) {
+          const journalId =
+            saveButton.dataset.saveJournalEdit;
+
+          const entry =
+            state.journalEntries.find(
+              (item) =>
+                item.id === journalId
+            );
+
+          if (!entry) return;
+
+
+          const article =
+            saveButton.closest(
+              '[data-journal-entry]'
+            );
+
+          const input =
+            article?.querySelector(
+              '[data-journal-edit-input]'
+            );
+
+          const text =
+            input?.value.trim() || '';
+
+
+          if (!text) {
+            UI.showToast(
+              'Eine Bemerkung darf nicht leer sein.'
+            );
+
+            input?.focus();
+
+            return;
+          }
+
+
+          try {
+            const updated =
+              await Storage.updateJournalOnApi(
+                entry.petId,
+                journalId,
+                text
+              );
+
+
+            const index =
+              state.journalEntries.findIndex(
+                (item) =>
+                  item.id === journalId
+              );
+
+
+            if (index !== -1) {
+              state.journalEntries[index] =
+                updated;
+            }
+
+
+            const pet =
+              state.pets.find(
+                (item) =>
+                  item.id === activePetId
+              );
+
+
+            if (pet) {
+              UI.renderRecord(
+                pet,
+                state.weights,
+                state.journalEntries
+              );
+            }
+
+
+            UI.showToast(
+              'Bemerkung aktualisiert.'
+            );
+
+
+          } catch (error) {
+            console.error(
+              'Bemerkung konnte nicht aktualisiert werden:',
+              error
+            );
+
+            UI.showToast(
+              error.message ||
+              'Bemerkung konnte nicht aktualisiert werden.'
+            );
+          }
+        }
+      }
+    );
 
     /*
     * Tastatursteuerung im Schnelleintrag
