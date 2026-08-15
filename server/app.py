@@ -694,6 +694,91 @@ def create_journal_entry(pet_id):
             journal_to_dict(row)
     }), 201
 
+@app.put("/api/pets/<pet_id>/journal/<journal_id>")
+def update_journal_entry(
+    pet_id,
+    journal_id
+):
+    data = request.get_json(
+        silent=True
+    ) or {}
+
+
+    text = str(
+        data.get(
+            "text",
+            ""
+        )
+    ).strip()
+
+
+    if not text:
+        return jsonify({
+            "error":
+                "Eine Bemerkung wird benötigt."
+        }), 400
+
+
+    now = now_iso()
+
+
+    with get_connection() as connection:
+
+        existing = connection.execute("""
+            SELECT *
+            FROM journal_entries
+            WHERE
+                id = ?
+                AND pet_id = ?
+        """, (
+            journal_id,
+            pet_id
+        )).fetchone()
+
+
+        if not existing:
+            return jsonify({
+                "error":
+                    "Bemerkung nicht gefunden."
+            }), 404
+
+
+        connection.execute("""
+            UPDATE journal_entries
+            SET
+                text = ?,
+                updated_at = ?
+            WHERE
+                id = ?
+                AND pet_id = ?
+        """, (
+            text,
+            now,
+            journal_id,
+            pet_id
+        ))
+
+
+        connection.commit()
+
+
+        row = connection.execute("""
+            SELECT *
+            FROM journal_entries
+            WHERE
+                id = ?
+                AND pet_id = ?
+        """, (
+            journal_id,
+            pet_id
+        )).fetchone()
+
+
+    return jsonify({
+        "journalEntry":
+            journal_to_dict(row)
+    })
+
 
 @app.post("/api/pets")
 def create_pet():

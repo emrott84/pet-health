@@ -20,17 +20,6 @@
       .slice(0, 10);
   }
 
-  function saveState() {
-    try {
-      Storage.save(state);
-      return true;
-    } catch (error) {
-      console.error('Speichern fehlgeschlagen:', error);
-      UI.showToast('Speichern fehlgeschlagen.');
-      return false;
-    }
-  }
-
   function showHome() {
     activePetId = null;
     $('homeView').classList.remove('hidden');

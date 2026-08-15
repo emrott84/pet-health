@@ -4,10 +4,6 @@
   const APP_ID = 'pet-health';
   const VERSION = 3;
 
-  const STORAGE_KEY = 'petHealth.v3';
-  const LEGACY_V2_KEY = 'petHealth.v2';
-  const LEGACY_V1_KEY = 'petHealth.v1';
-
   function makeId(prefix = 'id') {
     if (
       globalThis.crypto &&
@@ -282,27 +278,6 @@
     );
   }
 
-  function validateV2State(value) {
-    return (
-      value &&
-      typeof value === 'object' &&
-      value.app === APP_ID &&
-      Number(value.version) === 2 &&
-      Array.isArray(value.pets) &&
-      Array.isArray(value.weights)
-    );
-  }
-
-  function validateV1State(value) {
-    return (
-      value &&
-      typeof value === 'object' &&
-      value.app === APP_ID &&
-      Number(value.version) === 1 &&
-      Array.isArray(value.pets)
-    );
-  }
-
   function normalizeCurrentState(value) {
     const base = defaultState();
 
@@ -361,56 +336,6 @@
       pets,
       weights,
       journalEntries
-    };
-  }
-
-  function migrateV2(value) {
-    const now =
-      new Date().toISOString();
-
-    return {
-      app: APP_ID,
-      version: VERSION,
-
-      createdAt:
-        value.createdAt || now,
-
-      updatedAt: now,
-
-      pets:
-        value.pets.map(
-          normalizePet
-        ),
-
-      weights:
-        value.weights.map(
-          normalizeWeight
-        ),
-
-      journalEntries: []
-    };
-  }
-
-  function migrateV1(value) {
-    const now =
-      new Date().toISOString();
-
-    return {
-      app: APP_ID,
-      version: VERSION,
-
-      createdAt:
-        value.createdAt || now,
-
-      updatedAt: now,
-
-      pets:
-        value.pets.map(
-          normalizePet
-        ),
-
-      weights: [],
-      journalEntries: []
     };
   }
 
@@ -575,165 +500,11 @@
     return result.journalEntry;
   }
 
-  function save(state) {
-    state.app = APP_ID;
-    state.version = VERSION;
-
-    state.updatedAt =
-      new Date().toISOString();
-
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify(state)
-    );
-  }
-
-  function load() {
-    try {
-      const currentRaw =
-        localStorage.getItem(
-          STORAGE_KEY
-        );
-
-      if (currentRaw) {
-        const parsed =
-          JSON.parse(currentRaw);
-
-        if (
-          !validateV3State(parsed)
-        ) {
-          throw new Error(
-            'Ungültiger Pet-Health-v3-Datensatz.'
-          );
-        }
-
-        return normalizeCurrentState(
-          parsed
-        );
-      }
-
-      const v2Raw =
-        localStorage.getItem(
-          LEGACY_V2_KEY
-        );
-
-      if (v2Raw) {
-        const parsed =
-          JSON.parse(v2Raw);
-
-        if (
-          !validateV2State(parsed)
-        ) {
-          throw new Error(
-            'Ungültiger Pet-Health-v2-Datensatz.'
-          );
-        }
-
-        const migrated =
-          migrateV2(parsed);
-
-        save(migrated);
-
-        console.info(
-          'Pet Health: v2 → v3 erfolgreich migriert.'
-        );
-
-        return migrated;
-      }
-
-      const v1Raw =
-        localStorage.getItem(
-          LEGACY_V1_KEY
-        );
-
-      if (v1Raw) {
-        const parsed =
-          JSON.parse(v1Raw);
-
-        if (
-          !validateV1State(parsed)
-        ) {
-          throw new Error(
-            'Ungültiger Pet-Health-v1-Datensatz.'
-          );
-        }
-
-        const migrated =
-          migrateV1(parsed);
-
-        save(migrated);
-
-        console.info(
-          'Pet Health: v1 → v3 erfolgreich migriert.'
-        );
-
-        return migrated;
-      }
-
-      return defaultState();
-
-    } catch (error) {
-      console.error(
-        'Pet Health konnte gespeicherte Daten nicht laden:',
-        error
-      );
-
-      return defaultState();
-    }
-  }
-
-  function createPet(data) {
-    return normalizePet({
-      ...data,
-
-      id: makeId('pet'),
-
-      createdAt:
-        new Date().toISOString(),
-
-      updatedAt:
-        new Date().toISOString()
-    });
-  }
-
-  function createWeight(data) {
-    return normalizeWeight({
-      ...data,
-
-      id: makeId('weight'),
-
-      createdAt:
-        new Date().toISOString(),
-
-      updatedAt:
-        new Date().toISOString()
-    });
-  }
-
-  function createJournalEntry(data) {
-    return normalizeJournalEntry({
-      ...data,
-
-      id: makeId('journal'),
-
-      createdAt:
-        new Date().toISOString(),
-
-      updatedAt:
-        new Date().toISOString()
-    });
-  }
-
   window.PetHealthStorage = {
-    load,
     loadFromApi,
     createPetOnApi,
     updatePetOnApi,
     saveWeightOnApi,
     createJournalOnApi,
-    save,
-    createPet,
-    createWeight,
-    createJournalEntry
   };
 })();
