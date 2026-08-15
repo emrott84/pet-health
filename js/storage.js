@@ -444,6 +444,68 @@
     );
   }
 
+  async function createPetOnApi(data) {
+    const response = await fetch(
+      '/api/pets',
+      {
+        method: 'POST',
+
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json'
+        },
+
+        body: JSON.stringify(data)
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        result.error ||
+        `Tier konnte nicht angelegt werden (${response.status}).`
+      );
+    }
+
+    return normalizePet(
+      result.pet
+    );
+  }
+
+
+  async function updatePetOnApi(
+    petId,
+    data
+  ) {
+    const response = await fetch(
+      `/api/pets/${encodeURIComponent(petId)}`,
+      {
+        method: 'PUT',
+
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json'
+        },
+
+        body: JSON.stringify(data)
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        result.error ||
+        `Tier konnte nicht aktualisiert werden (${response.status}).`
+      );
+    }
+
+    return normalizePet(
+      result.pet
+    );
+  }
+
   function save(state) {
     state.app = APP_ID;
     state.version = VERSION;
@@ -596,6 +658,8 @@
   window.PetHealthStorage = {
     load,
     loadFromApi,
+    createPetOnApi,
+    updatePetOnApi,
     save,
     createPet,
     createWeight,

@@ -81,7 +81,7 @@
     $('petDialog').close();
   }
 
-  function handlePetSubmit(event) {
+  async function handlePetSubmit(event) {
     event.preventDefault();
     const data = UI.readPetForm();
 
@@ -130,35 +130,77 @@
       return;
     }
 
-    if (editingPetId) {
-      const pet = state.pets.find((item) => item.id === editingPetId);
-      if (!pet) return;
+    try {
+      if (editingPetId) {
+        const petId = editingPetId;
 
-      Object.assign(pet, data, { updatedAt: new Date().toISOString() });
-      if (!saveState()) return;
+        const updatedPet =
+          await Storage.updatePetOnApi(
+            petId,
+            data
+          );
 
-      const petId = pet.id;
+        const index =
+          state.pets.findIndex(
+            (item) =>
+              item.id === petId
+          );
+
+        if (index === -1) {
+          throw new Error(
+            'Tier wurde im lokalen State nicht gefunden.'
+          );
+        }
+
+        state.pets[index] =
+          updatedPet;
+
+        closeDialog();
+        openPet(petId);
+
+        UI.showToast(
+          'Tierakte aktualisiert.'
+        );
+
+        return;
+      }
+
+
+      const pet =
+        await Storage.createPetOnApi(
+          data
+        );
+
+      state.pets.push(
+        pet
+      );
+
       closeDialog();
-      openPet(petId);
-      UI.showToast('Tierakte aktualisiert.');
-      return;
+
+      UI.renderHome(
+        state.pets,
+        state.weights
+      );
+
+      openPet(
+        pet.id
+      );
+
+      UI.showToast(
+        `${pet.name} wurde angelegt.`
+      );
+
+    } catch (error) {
+      console.error(
+        'Tier konnte nicht gespeichert werden:',
+        error
+      );
+
+      UI.showToast(
+        error.message ||
+        'Tier konnte nicht gespeichert werden.'
+      );
     }
-
-    const pet = Storage.createPet(data);
-    state.pets.push(pet);
-
-    if (!saveState()) {
-      state.pets = state.pets.filter((item) => item.id !== pet.id);
-      return;
-    }
-
-    closeDialog();
-    UI.renderHome(
-      state.pets,
-      state.weights
-    );
-    openPet(pet.id);
-    UI.showToast(`${pet.name} wurde angelegt.`);
   }
 
   function getTodayWeight(petId) {
@@ -679,8 +721,6 @@
       );
     }
   }
-
-  init();
 
   init();
 })();
