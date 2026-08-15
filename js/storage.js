@@ -535,12 +535,39 @@
     );
   }
 
+  async function deleteJournalOnApi(
+    petId,
+    journalId
+  ) {
+    const response = await fetch(
+      `/api/pets/${encodeURIComponent(petId)}/journal/${encodeURIComponent(journalId)}`,
+      {
+        method: 'DELETE',
+        headers: {
+          Accept: 'application/json'
+        }
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        result.error ||
+        `Bemerkung konnte nicht gelöscht werden (${response.status}).`
+      );
+    }
+
+    return result.journalId;
+  }
+
   window.PetHealthStorage = {
     loadFromApi,
     createPetOnApi,
     updatePetOnApi,
     saveWeightOnApi,
     createJournalOnApi,
-    updateJournalOnApi
+    updateJournalOnApi,
+    deleteJournalOnApi
   };
 })();

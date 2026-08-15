@@ -898,6 +898,21 @@
                   />
                 </svg>
               </button>
+              <button
+                type="button"
+                class="journal-action-button danger"
+                data-delete-journal="${escapeHtml(entry.id)}"
+                title="Bemerkung löschen"
+                aria-label="Bemerkung löschen"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path d="M6 6l12 12" />
+                  <path d="M18 6 6 18" />
+                </svg>
+              </button>
             </div>
 
           </div>

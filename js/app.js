@@ -614,9 +614,144 @@
       }
     );
 
+    $('cancelDeleteJournalBtn').addEventListener(
+      'click',
+      () => {
+        const dialog =
+          $('deleteJournalDialog');
+
+        delete dialog.dataset.journalId;
+
+        dialog.close();
+      }
+    );
+
+
+    $('confirmDeleteJournalBtn').addEventListener(
+      'click',
+      async () => {
+        const dialog =
+          $('deleteJournalDialog');
+
+        const journalId =
+          dialog.dataset.journalId;
+
+        if (!journalId) return;
+
+
+        const entry =
+          state.journalEntries.find(
+            (item) =>
+              item.id === journalId
+          );
+
+        if (!entry) {
+          dialog.close();
+          return;
+        }
+
+
+        const button =
+          $('confirmDeleteJournalBtn');
+
+        button.disabled = true;
+
+
+        try {
+          await Storage.deleteJournalOnApi(
+            entry.petId,
+            journalId
+          );
+
+
+          state.journalEntries =
+            state.journalEntries.filter(
+              (item) =>
+                item.id !== journalId
+            );
+
+
+          delete dialog.dataset.journalId;
+
+          dialog.close();
+
+
+          const pet =
+            state.pets.find(
+              (item) =>
+                item.id === activePetId
+            );
+
+
+          if (pet) {
+            UI.renderRecord(
+              pet,
+              state.weights,
+              state.journalEntries
+            );
+          }
+
+
+          UI.showToast(
+            'Bemerkung gelöscht.'
+          );
+
+
+        } catch (error) {
+          console.error(
+            'Bemerkung konnte nicht gelöscht werden:',
+            error
+          );
+
+          UI.showToast(
+            error.message ||
+            'Bemerkung konnte nicht gelöscht werden.'
+          );
+
+        } finally {
+          button.disabled = false;
+        }
+      }
+    );
+
     $('recordJournal').addEventListener(
       'click',
       async (event) => {
+
+        const deleteButton =
+          event.target.closest(
+            '[data-delete-journal]'
+          );
+
+
+        if (deleteButton) {
+          const journalId =
+            deleteButton.dataset.deleteJournal;
+
+          const entry =
+            state.journalEntries.find(
+              (item) =>
+                item.id === journalId
+            );
+
+          if (!entry) return;
+
+
+          const dialog =
+            $('deleteJournalDialog');
+
+          dialog.dataset.journalId =
+            journalId;
+
+
+          $('deleteJournalPreview').textContent =
+            entry.text;
+
+
+          dialog.showModal();
+
+          return;
+        }
 
         const editButton =
           event.target.closest(

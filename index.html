@@ -322,6 +322,41 @@
     </form>
   </dialog>
 
+  <dialog id="deleteJournalDialog">
+    <div class="dialog-head">
+      <h2>Bemerkung löschen?</h2>
+    </div>
+
+    <div class="dialog-body">
+      <p>
+        Diese Bemerkung wird dauerhaft aus der Tierakte gelöscht.
+      </p>
+
+      <div
+        class="delete-journal-preview"
+        id="deleteJournalPreview"
+      ></div>
+    </div>
+
+    <div class="dialog-actions">
+      <button
+        class="btn"
+        id="cancelDeleteJournalBtn"
+        type="button"
+      >
+        Abbrechen
+      </button>
+
+      <button
+        class="btn danger"
+        id="confirmDeleteJournalBtn"
+        type="button"
+      >
+        Löschen
+      </button>
+    </div>
+  </dialog>
+
   <div id="toast" class="toast" role="status"></div>
 
   <script>

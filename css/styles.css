@@ -862,3 +862,41 @@ input:focus, select:focus { border-color: var(--accent); }
 
   margin-top: 5px;
 }
+
+.journal-action-button.danger:hover,
+.journal-action-button.danger:focus-visible {
+  background: rgba(255, 100, 100, 0.12);
+  color: #ff7b7b;
+}
+
+
+.btn.danger {
+  border-color: #9f4545;
+  background: #7d3030;
+  color: #fff;
+}
+
+
+.btn.danger:hover,
+.btn.danger:focus-visible {
+  border-color: #d45a5a;
+  background: #963838;
+  outline: none;
+}
+
+
+.delete-journal-preview {
+  margin-top: 12px;
+  padding: 10px 12px;
+
+  border-left: 3px solid var(--line);
+
+  background: var(--panel-2);
+  color: var(--muted);
+
+  border-radius: 8px;
+
+  line-height: 1.4;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
