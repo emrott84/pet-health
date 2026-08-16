@@ -93,7 +93,7 @@ p { line-height: 1.45; }
 
   text-align: left;
 
-  padding: 15px 62px 15px 15px;
+  padding: 15px 100px 15px 15px;
 
   border: 0;
   border-radius: 0;
@@ -132,10 +132,50 @@ p { line-height: 1.45; }
   overflow: hidden;
 }
 
+.pet-status-button {
+  position: absolute;
+  top: 20px;
+  right: 13px;
+
+  min-width: 70px;
+  height: 30px;
+
+  padding: 0 10px;
+
+  border: 1px solid var(--line);
+  border-radius: 9px;
+
+  background: var(--panel-2);
+  color: var(--muted);
+
+  font-size: 0.78rem;
+  font-weight: 700;
+
+  z-index: 2;
+}
+
+
+.pet-status-button.active {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+
+.pet-status-button:hover,
+.pet-status-button:focus-visible {
+  background: var(--accent-soft);
+  outline: none;
+}
+
+
+.pet-status-button.archived {
+  opacity: 0.8;
+}
+
 .quick-add-toggle {
   position: absolute;
-  top: 13px;
-  right: 13px;
+  top: 70px;
+  right: 25px;
 
   width: 38px;
   height: 38px;
@@ -454,6 +494,48 @@ input:focus, select:focus { border-color: var(--accent); }
   font-size: 0.82rem;
 }
 
+.archive-reason-list {
+  display: grid;
+  gap: 7px;
+
+  margin-top: 14px;
+}
+
+
+.archive-reason {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+
+  padding: 9px 10px;
+
+  border: 1px solid var(--line);
+  border-radius: 10px;
+
+  background: var(--panel-2);
+
+  cursor: pointer;
+}
+
+
+.archive-reason:hover {
+  border-color: var(--accent);
+}
+
+
+.archive-reason input {
+  width: auto;
+  margin: 0;
+}
+
+
+.archive-note-label {
+  display: grid;
+  gap: 6px;
+
+  margin-top: 14px;
+}
+
 .toast {
   position: fixed;
   left: 50%;
@@ -481,8 +563,8 @@ input:focus, select:focus { border-color: var(--accent); }
 }
 
 .pet-card-weight strong {
-  font-size: 1.05rem;
-  font-weight: 700;
+  font-size: 0.95rem;
+  font-weight: 300;
 }
 
 .weight-trend {

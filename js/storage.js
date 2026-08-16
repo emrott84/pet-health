@@ -144,6 +144,31 @@
 
       neutered,
 
+      status:
+        pet?.status === 'archived'
+          ? 'archived'
+          : 'active',
+
+      archiveReason:
+        [
+          'deceased',
+          'rehomed',
+          'care_ended',
+          'other'
+        ].includes(pet?.archiveReason)
+          ? pet.archiveReason
+          : null,
+
+      archiveNote:
+        String(
+          pet?.archiveNote || ''
+        ).trim(),
+
+      archivedAt:
+        pet?.archivedAt
+          ? String(pet.archivedAt)
+          : null,
+
       targetWeightMin:
         pet?.targetWeightMin != null &&
         Number.isFinite(
@@ -431,6 +456,42 @@
     );
   }
 
+  async function updatePetStatusOnApi(
+    petId,
+    data
+  ) {
+    const response = await fetch(
+      `/api/pets/${encodeURIComponent(petId)}/status`,
+      {
+        method: 'PUT',
+
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json'
+        },
+
+        body: JSON.stringify(data)
+      }
+    );
+
+
+    const result =
+      await response.json();
+
+
+    if (!response.ok) {
+      throw new Error(
+        result.error ||
+        `Aktenstatus konnte nicht geändert werden (${response.status}).`
+      );
+    }
+
+
+    return normalizePet(
+      result.pet
+    );
+  }
+
   async function saveWeightOnApi(
     petId,
     date,
@@ -565,6 +626,7 @@
     loadFromApi,
     createPetOnApi,
     updatePetOnApi,
+    updatePetStatusOnApi,
     saveWeightOnApi,
     createJournalOnApi,
     updateJournalOnApi,

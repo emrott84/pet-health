@@ -357,6 +357,116 @@
     </div>
   </dialog>
 
+  <dialog id="archivePetDialog">
+    <form id="archivePetForm">
+      <div class="dialog-head">
+        <h2>Tierakte archivieren</h2>
+      </div>
+
+      <div class="dialog-body">
+        <p>
+          Warum soll die Akte von
+          <strong id="archivePetName"></strong>
+          archiviert werden?
+        </p>
+
+        <div class="archive-reason-list">
+          <label class="archive-reason">
+            <input
+              type="radio"
+              name="archiveReason"
+              value="deceased"
+            />
+            <span>Verstorben</span>
+          </label>
+
+          <label class="archive-reason">
+            <input
+              type="radio"
+              name="archiveReason"
+              value="rehomed"
+            />
+            <span>Vermittelt</span>
+          </label>
+
+          <label class="archive-reason">
+            <input
+              type="radio"
+              name="archiveReason"
+              value="care_ended"
+            />
+            <span>Betreuung beendet</span>
+          </label>
+
+          <label class="archive-reason">
+            <input
+              type="radio"
+              name="archiveReason"
+              value="other"
+            />
+            <span>Sonstiges</span>
+          </label>
+        </div>
+
+        <label class="archive-note-label">
+          Begründung / Notiz
+          <textarea
+            id="archivePetNote"
+            rows="3"
+            maxlength="2000"
+            placeholder="Optional – bei Sonstiges erforderlich"
+          ></textarea>
+        </label>
+      </div>
+
+      <div class="dialog-actions">
+        <button
+          class="btn"
+          id="cancelArchivePetBtn"
+          type="button"
+        >
+          Abbrechen
+        </button>
+
+        <button
+          class="btn primary"
+          id="confirmArchivePetBtn"
+          type="submit"
+        >
+          Archivieren
+        </button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="reactivatePetDialog">
+    <div class="dialog-head">
+      <h2>Tierakte aktivieren?</h2>
+    </div>
+
+    <div class="dialog-body">
+      <p id="reactivatePetText"></p>
+    </div>
+
+    <div class="dialog-actions">
+      <button
+        class="btn"
+        id="cancelReactivatePetBtn"
+        type="button"
+      >
+        Abbrechen
+      </button>
+
+      <button
+        class="btn primary"
+        id="confirmReactivatePetBtn"
+        type="button"
+      >
+        Aktivieren
+      </button>
+    </div>
+  </dialog>
+
   <div id="toast" class="toast" role="status"></div>
 
   <script>

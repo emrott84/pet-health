@@ -565,6 +565,233 @@
       }
     );
 
+    $('cancelArchivePetBtn').addEventListener(
+      'click',
+      () => {
+        const dialog =
+          $('archivePetDialog');
+
+        delete dialog.dataset.petId;
+
+        dialog.close();
+      }
+    );
+
+
+    $('archivePetForm').addEventListener(
+      'submit',
+      async (event) => {
+        event.preventDefault();
+
+
+        const dialog =
+          $('archivePetDialog');
+
+        const petId =
+          dialog.dataset.petId;
+
+
+        if (!petId) return;
+
+
+        const reasonInput =
+          document.querySelector(
+            'input[name="archiveReason"]:checked'
+          );
+
+
+        if (!reasonInput) {
+          UI.showToast(
+            'Bitte einen Archivierungsgrund auswählen.'
+          );
+
+          return;
+        }
+
+
+        const archiveReason =
+          reasonInput.value;
+
+
+        const archiveNote =
+          $('archivePetNote')
+            .value
+            .trim();
+
+
+        if (
+          archiveReason === 'other' &&
+          !archiveNote
+        ) {
+          UI.showToast(
+            'Bei Sonstiges wird eine Begründung benötigt.'
+          );
+
+          $('archivePetNote').focus();
+
+          return;
+        }
+
+
+        const button =
+          $('confirmArchivePetBtn');
+
+
+        button.disabled = true;
+
+
+        try {
+          const updated =
+            await Storage.updatePetStatusOnApi(
+              petId,
+              {
+                status: 'archived',
+                archiveReason,
+                archiveNote
+              }
+            );
+
+
+          const index =
+            state.pets.findIndex(
+              (pet) =>
+                pet.id === petId
+            );
+
+
+          if (index !== -1) {
+            state.pets[index] =
+              updated;
+          }
+
+
+          delete dialog.dataset.petId;
+
+          dialog.close();
+
+
+          UI.renderHome(
+            state.pets,
+            state.weights
+          );
+
+
+          UI.showToast(
+            'Tierakte archiviert.'
+          );
+
+
+        } catch (error) {
+          console.error(
+            'Tierakte konnte nicht archiviert werden:',
+            error
+          );
+
+
+          UI.showToast(
+            error.message ||
+            'Tierakte konnte nicht archiviert werden.'
+          );
+
+
+        } finally {
+          button.disabled = false;
+        }
+      }
+    );
+
+
+    $('cancelReactivatePetBtn').addEventListener(
+      'click',
+      () => {
+        const dialog =
+          $('reactivatePetDialog');
+
+        delete dialog.dataset.petId;
+
+        dialog.close();
+      }
+    );
+
+
+    $('confirmReactivatePetBtn').addEventListener(
+      'click',
+      async () => {
+        const dialog =
+          $('reactivatePetDialog');
+
+        const petId =
+          dialog.dataset.petId;
+
+
+        if (!petId) return;
+
+
+        const button =
+          $('confirmReactivatePetBtn');
+
+
+        button.disabled = true;
+
+
+        try {
+          const updated =
+            await Storage.updatePetStatusOnApi(
+              petId,
+              {
+                status: 'active'
+              }
+            );
+
+
+          const index =
+            state.pets.findIndex(
+              (pet) =>
+                pet.id === petId
+            );
+
+
+          if (index !== -1) {
+            state.pets[index] =
+              updated;
+          }
+
+
+          delete dialog.dataset.petId;
+
+          dialog.close();
+
+
+          UI.renderHome(
+            state.pets,
+            state.weights
+          );
+
+
+          UI.showToast(
+            'Tierakte aktiviert.'
+          );
+
+
+        } catch (error) {
+          console.error(
+            'Tierakte konnte nicht aktiviert werden:',
+            error
+          );
+
+
+          UI.showToast(
+            error.message ||
+            'Tierakte konnte nicht aktiviert werden.'
+          );
+
+
+        } finally {
+          button.disabled = false;
+        }
+      }
+    );
+
     /*
     * Tierkarte:
     * + = Schnelleintrag
@@ -573,6 +800,91 @@
     $('petGrid').addEventListener(
       'click',
       (event) => {
+
+                const statusButton =
+                  event.target.closest(
+                    '[data-pet-status]'
+                  );
+
+
+                if (statusButton) {
+                  event.preventDefault();
+                  event.stopPropagation();
+
+
+                  const petId =
+                    statusButton.dataset.petStatus;
+
+
+                  const pet =
+                    state.pets.find(
+                      (item) =>
+                        item.id === petId
+                    );
+
+
+                  if (!pet) return;
+
+
+                  if (pet.status === 'archived') {
+
+                    const reasonLabels = {
+                      deceased:
+                        'Verstorben',
+
+                      rehomed:
+                        'Vermittelt',
+
+                      care_ended:
+                        'Betreuung beendet',
+
+                      other:
+                        'Sonstiges'
+                    };
+
+
+                    const reason =
+                      reasonLabels[
+                        pet.archiveReason
+                      ] || 'Sonstiges';
+
+
+                    $('reactivatePetText').textContent =
+                      `${pet.name} ist mit dem Archivierungsgrund „${reason}“ archiviert. Soll die Akte wieder aktiviert werden?`;
+
+
+                    const dialog =
+                      $('reactivatePetDialog');
+
+
+                    dialog.dataset.petId =
+                      petId;
+
+
+                    dialog.showModal();
+
+                  } else {
+
+                    const dialog =
+                      $('archivePetDialog');
+
+
+                    $('archivePetForm').reset();
+
+                    $('archivePetName').textContent =
+                      pet.name;
+
+
+                    dialog.dataset.petId =
+                      petId;
+
+
+                    dialog.showModal();
+                  }
+
+
+                  return;
+                }
 
         const quickToggle =
           event.target.closest(

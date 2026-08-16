@@ -249,11 +249,8 @@
           )
         : '';
 
-      const details = [
-        pet.species,
-        age,
-        petStatusLabel(pet.status)
-      ].filter(Boolean).join(' · ');
+      const details =
+        age || 'Alter nicht angegeben';
 
       return `
         <div class="pet-card-wrap">
@@ -314,6 +311,21 @@
                 }
               </div>
             </div>
+          </button>
+
+          <button
+            class="pet-status-button ${
+              pet.status === 'archived'
+                ? 'archived'
+                : 'active'
+            }"
+            type="button"
+            data-pet-status="${escapeHtml(pet.id)}"
+            aria-label="Aktenstatus von ${escapeHtml(pet.name)} ändern"
+          >
+            ${escapeHtml(
+              petStatusLabel(pet.status)
+            )}
           </button>
 
           <button
