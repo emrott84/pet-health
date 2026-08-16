@@ -89,6 +89,12 @@
     return 'Nicht angegeben';
   }
 
+  function petStatusLabel(status) {
+    return status === 'archived'
+      ? 'Archiviert'
+      : 'Aktiv';
+  }
+
   function formatKg(value) {
     if (value == null || !Number.isFinite(Number(value))) {
       return null;
@@ -245,7 +251,8 @@
 
       const details = [
         pet.species,
-        age
+        age,
+        petStatusLabel(pet.status)
       ].filter(Boolean).join(' · ');
 
       return `
@@ -1191,7 +1198,8 @@
         pet.species,
         age !== 'Nicht angegeben'
           ? age
-          : ''
+          : '',
+        petStatusLabel(pet.status)
       ]
         .filter(Boolean)
         .join(' · ');

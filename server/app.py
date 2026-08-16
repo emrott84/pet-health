@@ -71,6 +71,31 @@ def init_database():
                 target_weight_min REAL,
                 target_weight_max REAL,
 
+                status TEXT
+                    NOT NULL DEFAULT 'active'
+                    CHECK (
+                        status IN (
+                            'active',
+                            'archived'
+                        )
+                    ),
+
+                archive_reason TEXT
+                    CHECK (
+                        archive_reason IS NULL
+                        OR archive_reason IN (
+                            'deceased',
+                            'rehomed',
+                            'care_ended',
+                            'other'
+                        )
+                    ),
+
+                archive_note TEXT
+                    NOT NULL DEFAULT '',
+
+                archived_at TEXT,
+
                 created_at TEXT NOT NULL,
                 updated_at TEXT NOT NULL
             )
@@ -154,6 +179,42 @@ def init_database():
             )
         """)
 
+        connection.execute("""
+            CREATE TABLE IF NOT EXISTS pet_status_events (
+                id TEXT PRIMARY KEY,
+
+                pet_id TEXT NOT NULL,
+
+                event_type TEXT NOT NULL
+                    CHECK (
+                        event_type IN (
+                            'archived',
+                            'reactivated'
+                        )
+                    ),
+
+                archive_reason TEXT
+                    CHECK (
+                        archive_reason IS NULL
+                        OR archive_reason IN (
+                            'deceased',
+                            'rehomed',
+                            'care_ended',
+                            'other'
+                        )
+                    ),
+
+                note TEXT
+                    NOT NULL DEFAULT '',
+
+                created_at TEXT NOT NULL,
+
+                FOREIGN KEY (pet_id)
+                    REFERENCES pets(id)
+                    ON DELETE CASCADE
+            )
+        """)
+
 
         connection.execute("""
             CREATE INDEX IF NOT EXISTS
@@ -179,16 +240,83 @@ def init_database():
             ON medications (pet_id)
         """)
 
+        connection.execute("""
+                    CREATE INDEX IF NOT EXISTS
+                    idx_pet_status_events_pet_date
+                    ON pet_status_events (
+                        pet_id,
+                        created_at
+                    )
+                """)
+
+        pet_columns = {
+            row["name"]
+            for row in connection.execute(
+                "PRAGMA table_info(pets)"
+            ).fetchall()
+        }
+
+
+        if "status" not in pet_columns:
+
+            connection.execute("""
+                ALTER TABLE pets
+                ADD COLUMN status TEXT
+                    NOT NULL DEFAULT 'active'
+                    CHECK (
+                        status IN (
+                            'active',
+                            'archived'
+                        )
+                    )
+            """)
+
+        if "archive_reason" not in pet_columns:
+
+            connection.execute("""
+                ALTER TABLE pets
+                ADD COLUMN archive_reason TEXT
+                    CHECK (
+                        archive_reason IS NULL
+                        OR archive_reason IN (
+                            'deceased',
+                            'rehomed',
+                            'care_ended',
+                            'other'
+                        )
+                    )
+            """)
+
+
+        if "archive_note" not in pet_columns:
+
+            connection.execute("""
+                ALTER TABLE pets
+                ADD COLUMN archive_note TEXT
+                    NOT NULL DEFAULT ''
+            """)
+
+
+        if "archived_at" not in pet_columns:
+
+            connection.execute("""
+                ALTER TABLE pets
+                ADD COLUMN archived_at TEXT
+            """)
 
         connection.execute("""
-            INSERT OR IGNORE INTO app_meta (
+            INSERT INTO app_meta (
                 key,
                 value
             )
             VALUES (
                 'database_version',
-                '1'
+                '4'
             )
+
+            ON CONFLICT (key)
+            DO UPDATE SET
+                value = excluded.value
         """)
 
         connection.commit()
@@ -223,6 +351,18 @@ def pet_to_dict(row):
 
         "targetWeightMax":
             row["target_weight_max"],
+
+        "status":
+             row["status"],
+
+        "archiveReason":
+            row["archive_reason"],
+
+        "archiveNote":
+            row["archive_note"],
+
+        "archivedAt":
+            row["archived_at"],
 
         "createdAt":
             row["created_at"],
@@ -1525,6 +1665,210 @@ def update_pet(pet_id):
                     True
                 ) else 0,
                 created_at,
+                now
+            ))
+
+
+        connection.commit()
+
+
+        pet = load_pet_with_health(
+            connection,
+            pet_id
+        )
+
+
+    return jsonify({
+        "pet": pet
+    })
+
+@app.put("/api/pets/<pet_id>/status")
+def update_pet_status(pet_id):
+    data = request.get_json(
+        silent=True
+    ) or {}
+
+
+    status = str(
+        data.get(
+            "status",
+            ""
+        )
+    ).strip()
+
+
+    if status not in (
+        "active",
+        "archived"
+    ):
+        return jsonify({
+            "error":
+                "Ungültiger Aktenstatus."
+        }), 400
+
+
+    archive_reason = data.get(
+        "archiveReason"
+    )
+
+    archive_note = str(
+        data.get(
+            "archiveNote",
+            ""
+        )
+    ).strip()
+
+
+    if status == "archived":
+
+        valid_reasons = {
+            "deceased",
+            "rehomed",
+            "care_ended",
+            "other"
+        }
+
+
+        archive_reason = str(
+            archive_reason or ""
+        ).strip()
+
+
+        if archive_reason not in valid_reasons:
+            return jsonify({
+                "error":
+                    "Ein gültiger Archivierungsgrund wird benötigt."
+            }), 400
+
+
+        if (
+            archive_reason == "other"
+            and not archive_note
+        ):
+            return jsonify({
+                "error":
+                    "Bei Sonstiges wird eine Begründung benötigt."
+            }), 400
+
+
+    else:
+        archive_reason = None
+        archive_note = ""
+
+
+    now = now_iso()
+
+
+    with get_connection() as connection:
+
+        existing = connection.execute("""
+            SELECT status
+            FROM pets
+            WHERE id = ?
+        """, (
+            pet_id,
+        )).fetchone()
+
+
+        if not existing:
+            return jsonify({
+                "error":
+                    "Tier nicht gefunden."
+            }), 404
+
+
+        if existing["status"] == status:
+            return jsonify({
+                "error":
+                    "Die Tierakte hat diesen Status bereits."
+            }), 409
+
+
+        if status == "archived":
+
+            connection.execute("""
+                UPDATE pets
+                SET
+                    status = 'archived',
+                    archive_reason = ?,
+                    archive_note = ?,
+                    archived_at = ?,
+                    updated_at = ?
+                WHERE id = ?
+            """, (
+                archive_reason,
+                archive_note,
+                now,
+                now,
+                pet_id
+            ))
+
+
+            connection.execute("""
+                INSERT INTO pet_status_events (
+                    id,
+                    pet_id,
+                    event_type,
+                    archive_reason,
+                    note,
+                    created_at
+                )
+                VALUES (
+                    ?,
+                    ?,
+                    'archived',
+                    ?,
+                    ?,
+                    ?
+                )
+            """, (
+                "status_event_" +
+                    uuid.uuid4().hex,
+                pet_id,
+                archive_reason,
+                archive_note,
+                now
+            ))
+
+
+        else:
+
+            connection.execute("""
+                UPDATE pets
+                SET
+                    status = 'active',
+                    archive_reason = NULL,
+                    archive_note = '',
+                    archived_at = NULL,
+                    updated_at = ?
+                WHERE id = ?
+            """, (
+                now,
+                pet_id
+            ))
+
+
+            connection.execute("""
+                INSERT INTO pet_status_events (
+                    id,
+                    pet_id,
+                    event_type,
+                    archive_reason,
+                    note,
+                    created_at
+                )
+                VALUES (
+                    ?,
+                    ?,
+                    'reactivated',
+                    NULL,
+                    '',
+                    ?
+                )
+            """, (
+                "status_event_" +
+                    uuid.uuid4().hex,
+                pet_id,
                 now
             ))
 
